@@ -1,0 +1,45 @@
+--- Transactions ---
+transaction_id,date,type,amount,category_id,account_id,transfer_account_id,payment_mode,note,tags,created_at,updated_at
+
+--- Categories ---
+category_id,name,icon,color,type,monthly_budget,is_active
+CAT-FOOD,Food,🍽️,#EF4444,Expense,5000,True
+CAT-SAL,Salary,💰,#22C55E,Income,0,True
+CAT-FUEL,Fuel,⛽,#64748B,Expense,3000,True
+
+--- Accounts ---
+account_id,name,type,opening_balance,current_balance,icon,color,is_active
+ACC-CASH,Cash,Cash,0,0,💵,#22C55E,True
+ACC-UCO,UCO Bank,Bank,0,0,🏦,#3B82F6,True
+
+--- Budgets ---
+month,category_id,budget_limit,amount_spent,remaining,percentage_used
+
+--- Settings ---
+key,value
+app_name,RupeeTrail
+currency,₹
+number_format,en-IN
+timezone,Asia/Kolkata
+pin_hash,
+session_token,
+session_expiry,
+theme,dark
+default_account,ACC-CASH
+default_payment_mode,UPI
+
+--- DashboardCache ---
+cache_key,json_data,updated_at
+
+--- ActivityLog ---
+log_id,action,entity,entity_id,timestamp,details
+
+--- AppMeta ---
+key,value
+version,1.0.0
+build_number,1
+database_version,1.0
+last_backup,
+last_sync,
+install_date,
+

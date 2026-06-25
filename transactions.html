@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Transactions - RupeeTrail</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="js/ui.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/state.js"></script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar (Desktop) -->
+        <aside class="app-sidebar hide-on-mobile">
+            <div class="sidebar-header">
+                <h2>RupeeTrail</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link"><i class='bx bx-home'></i> Home</a>
+                <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="transactions.html" class="nav-link active"><i class='bx bx-list-ul'></i> Transactions</a>
+                <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
+                <a href="accounts.html" class="nav-link"><i class='bx bx-wallet'></i> Accounts</a>
+                <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i> Settings</a>
+            </nav>
+        </aside>
+
+        <div class="app-main">
+            <!-- Topbar -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 class="page-title">Transactions</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">SR</div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="app-content animate-fade-in">
+                
+                <!-- Search and Filter Bar -->
+                <div class="search-filter-bar">
+                    <div class="search-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search transactions...">
+                    </div>
+                </div>
+
+                <!-- Filter Chips -->
+                <div class="filter-chips" id="filterChips">
+                    <div class="chip active" data-filter="all">All</div>
+                    <div class="chip" data-filter="income">Income</div>
+                    <div class="chip" data-filter="expense">Expense</div>
+                </div>
+
+                <!-- Transactions List -->
+                <div class="transaction-list" id="transactionsContainer">
+                    <!-- Rendered dynamically -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" style="display: none;"></div>
+
+            </main>
+
+            <!-- Bottom Navigation (Mobile) -->
+            <nav class="bottom-nav hide-on-desktop">
+                <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
+                <a href="transactions.html" class="nav-item active"><i class='bx bx-list-ul'></i><span>Txns</span></a>
+                <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
+                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
+            </nav>
+            
+            <!-- FAB overrides default to open Bottom Sheet -->
+            <button class="fab hide-on-desktop" id="fabBtn">
+                <i class='bx bx-plus'></i>
+            </button>
+            
+            <!-- Floating Add Button for Desktop -->
+            <button class="btn btn-primary desktop-only" id="desktopAddBtn" style="position: absolute; bottom: var(--space-6); right: var(--space-6); border-radius: var(--radius-full); padding: var(--space-3) var(--space-5); box-shadow: var(--shadow-lg);">
+                <i class='bx bx-plus' style="margin-right: 0.5rem;"></i> New Transaction
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Sheet overlay and content -->
+    <div class="bottom-sheet-overlay" id="sheetOverlay"></div>
+    
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="bottom-sheet-header">
+            <h3 id="sheetTitle" style="margin: 0; font-size: var(--font-size-lg);">Add Transaction</h3>
+            <button id="closeSheetBtn" class="btn btn-ghost" style="padding: 0.25rem; font-size: 1.5rem; border-radius: var(--radius-full);"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="bottom-sheet-body">
+            <form id="txForm">
+                <input type="hidden" id="txId">
+                
+                <!-- Type Toggle -->
+                <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4); background: var(--bg-surface-hover); padding: 0.25rem; border-radius: var(--radius-base);">
+                    <button type="button" id="btnExpense" class="btn" style="flex: 1; background: white; box-shadow: var(--shadow-sm); color: var(--color-danger);">Expense</button>
+                    <button type="button" id="btnIncome" class="btn btn-ghost" style="flex: 1; color: var(--text-secondary);">Income</button>
+                </div>
+                <input type="hidden" id="txType" value="expense">
+
+                <!-- Amount -->
+                <div class="form-group">
+                    <label class="form-label">Amount (₹)</label>
+                    <input type="number" id="txAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold;">
+                </div>
+
+                <!-- Title -->
+                <div class="form-group">
+                    <label class="form-label">Title / Notes</label>
+                    <input type="text" id="txTitle" class="form-input" placeholder="What was this for?" required>
+                </div>
+
+                <!-- Category -->
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="txCategory" class="form-select" required>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Salary">Salary</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Date -->
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="txDate" class="form-input" required>
+                </div>
+
+                <!-- Account -->
+                <div class="form-group" style="margin-top: var(--space-4);">
+                    <label class="form-label">Account</label>
+                    <select id="txAccount" class="form-select" required>
+                        <option value="" disabled selected>Select an account</option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div style="display: flex; gap: var(--space-4); margin-top: var(--space-6);">
+                    <button type="button" id="deleteTxBtn" class="btn btn-ghost" style="display: none; color: var(--color-danger); border: 1px solid var(--color-danger);">Delete</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/transactions.js"></script>
+    <script src="js/pwa.js"></script>
+</body>
+</html>

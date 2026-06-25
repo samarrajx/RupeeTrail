@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login - RupeeTrail</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+            height: 24px;
+        }
+        
+        .pin-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: var(--radius-full);
+            border: 2px solid var(--border-light);
+            background-color: transparent;
+            transition: all var(--transition-fast);
+        }
+        
+        .pin-dot.filled {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            transform: scale(1.2);
+        }
+
+        .pin-dot.error {
+            background-color: var(--color-danger);
+            border-color: var(--color-danger);
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-4);
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        
+        .key {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-medium);
+            background-color: var(--bg-app);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            user-select: none;
+            transition: all var(--transition-fast);
+            color: var(--text-primary);
+        }
+        
+        .key:active {
+            background-color: var(--border-light);
+            transform: scale(0.95);
+        }
+        
+        .key.action {
+            font-size: var(--font-size-xl);
+            color: var(--text-secondary);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .auth-message {
+            text-align: center;
+            margin-bottom: var(--space-6);
+            color: var(--text-secondary);
+            min-height: 24px;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .auth-logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: var(--space-2);
+            color: var(--color-primary);
+            font-size: var(--font-size-4xl);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container animate-fade-in">
+        <div class="auth-card" id="authCard">
+            <div class="auth-header">
+                <div class="auth-logo"><i class='bx bx-wallet-alt'></i></div>
+                <h2>RupeeTrail</h2>
+            </div>
+            
+            <div class="auth-message" id="authMessage">Enter your PIN</div>
+            
+            <div class="pin-display" id="pinDisplay">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+            
+            <div class="keypad">
+                <div class="key" data-key="1">1</div>
+                <div class="key" data-key="2">2</div>
+                <div class="key" data-key="3">3</div>
+                <div class="key" data-key="4">4</div>
+                <div class="key" data-key="5">5</div>
+                <div class="key" data-key="6">6</div>
+                <div class="key" data-key="7">7</div>
+                <div class="key" data-key="8">8</div>
+                <div class="key" data-key="9">9</div>
+                <div class="key action" id="keyClear">C</div>
+                <div class="key" data-key="0">0</div>
+                <div class="key action" id="keyBackspace"><i class='bx bx-backspace'></i></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/ui.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/pwa.js"></script>
+</body>
+</html>

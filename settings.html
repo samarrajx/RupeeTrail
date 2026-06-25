@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - RupeeTrail</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4F46E5">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar (Desktop) -->
+        <aside class="app-sidebar hide-on-mobile">
+            <div class="sidebar-header">
+                <h2>RupeeTrail</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-link"><i class='bx bx-home'></i> Home</a>
+                <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="transactions.html" class="nav-link"><i class='bx bx-list-ul'></i> Transactions</a>
+                <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
+                <a href="accounts.html" class="nav-link"><i class='bx bx-wallet'></i> Accounts</a>
+                <a href="settings.html" class="nav-link active"><i class='bx bx-cog'></i> Settings</a>
+            </nav>
+        </aside>
+
+        <div class="app-main">
+            <!-- Topbar -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 class="page-title">Settings</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">SR</div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="app-content">
+                <!-- No dashboard, charts, or data. Blank page. -->
+            </main>
+
+            <!-- Bottom Navigation (Mobile) -->
+            <nav class="bottom-nav hide-on-desktop">
+                <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Home</span></a>
+                <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
+                <a href="transactions.html" class="nav-item"><i class='bx bx-list-ul'></i><span>Txns</span></a>
+                <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
+                <a href="settings.html" class="nav-item active"><i class='bx bx-cog'></i><span>Settings</span></a>
+            </nav>
+            
+            <!-- FAB -->
+            <button class="fab hide-on-desktop">
+                <i class='bx bx-plus'></i>
+            </button>
+        </div>
+    </div>
+    <script src="js/ui.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/pwa.js"></script>
+</body>
+</html>
