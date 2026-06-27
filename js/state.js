@@ -1,24 +1,30 @@
-// state.js - Centralized Data Management and Cache
+// state.js - Centralized Data Management with Stale-While-Revalidate (SWR) Cache
 
 window.State = (() => {
   const CACHE_PREFIX = 'rupeetrail_data_';
-  const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+  const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes — we background-refresh anyway
 
-  // Internal cache helper
-  function getFromCache(key) {
+  // ─── Cache Helpers ─────────────────────────────────────────────────────────
+
+  function getRaw(key) {
     const raw = localStorage.getItem(CACHE_PREFIX + key);
     if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Date.now() - parsed.timestamp > CACHE_EXPIRY_MS) {
-        localStorage.removeItem(CACHE_PREFIX + key);
-        return null;
-      }
-      return parsed.data;
-    } catch {
-      localStorage.removeItem(CACHE_PREFIX + key);
-      return null;
-    }
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function getCached(key) {
+    const entry = getRaw(key);
+    return (entry && Array.isArray(entry.data)) ? entry.data : null;
+  }
+
+  function hasCached(key) {
+    return getCached(key) !== null;
+  }
+
+  function isStale(key) {
+    const entry = getRaw(key);
+    if (!entry) return true;
+    return (Date.now() - entry.timestamp) > CACHE_TTL_MS;
   }
 
   function setInCache(key, data) {
@@ -28,100 +34,151 @@ window.State = (() => {
         timestamp: Date.now()
       }));
     } catch (e) {
-      console.warn("Local storage full or error", e);
+      console.warn('[State] localStorage write failed:', e);
     }
   }
 
   function clearCache() {
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith(CACHE_PREFIX)) {
-        localStorage.removeItem(key);
-      }
+      if (key.startsWith(CACHE_PREFIX)) localStorage.removeItem(key);
     });
   }
 
-  // --- Actions ---
+  // ─── Sync Indicator ────────────────────────────────────────────────────────
 
-  async function fetchAccounts(force = false) {
-    if (!force) {
-      const cached = getFromCache('accounts');
-      if (cached && Array.isArray(cached)) return cached;
+  let syncTimer = null;
+
+  function showSyncing() {
+    const el = document.getElementById('sync-indicator');
+    if (!el) return;
+    el.textContent = '\u21BB Syncing';
+    el.classList.add('visible', 'syncing');
+    el.classList.remove('done');
+  }
+
+  function showSynced() {
+    const el = document.getElementById('sync-indicator');
+    if (!el) return;
+    el.textContent = '\u2713 Updated';
+    el.classList.remove('syncing');
+    el.classList.add('done');
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      el.classList.remove('visible', 'done');
+    }, 2000);
+  }
+
+  function hideSyncIndicator() {
+    const el = document.getElementById('sync-indicator');
+    if (!el) return;
+    el.classList.remove('visible', 'syncing', 'done');
+  }
+
+  // ─── SWR Core ──────────────────────────────────────────────────────────────
+
+  function normaliseResponse(res) {
+    if (res && res.data && Array.isArray(res.data.data)) return res.data.data;
+    if (res && Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res)) return res;
+    return [];
+  }
+
+  /**
+   * fetchWithSWR(key, apiFn, callbacks)
+   *
+   * 1. If cache exists  -> call callbacks.onCache(data) immediately (instant render)
+   * 2. If stale/missing -> hit API, then call callbacks.onFresh(data)
+   * 3. If offline       -> return cached data only
+   */
+  async function fetchWithSWR(key, apiFn, callbacks = {}) {
+    const cached = getCached(key);
+    const stale  = isStale(key);
+
+    // Step 1: Serve cache immediately
+    if (cached) {
+      if (callbacks.onCache) callbacks.onCache(cached);
+      if (!stale) return cached; // Cache is still fresh, skip network
     }
 
+    // Step 2: Offline fallback
     if (!navigator.onLine) {
-      const cached = getFromCache('accounts');
-      return Array.isArray(cached) ? cached : [];
+      if (!cached && callbacks.onCache) callbacks.onCache([]);
+      return cached || [];
     }
 
+    // Step 3: Background network fetch
+    showSyncing();
     try {
-      const res = await window.api.getAccounts();
-      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
-      setInCache('accounts', data);
+      const res  = await apiFn();
+      const data = normaliseResponse(res);
+
+      setInCache(key, data);
+
+      if (callbacks.onFresh) {
+        callbacks.onFresh(data);
+        showSynced();
+      } else {
+        hideSyncIndicator();
+      }
       return data;
     } catch (err) {
-      console.error(err);
-      window.UI.showToast("Failed to fetch accounts", "error");
-      return getFromCache('accounts') || [];
+      console.error('[State] fetch failed for "' + key + '":', err);
+      hideSyncIndicator();
+      if (!cached) window.UI.showToast('Failed to load ' + key, 'error');
+      return cached || [];
     }
   }
 
-  async function fetchCategories(force = false) {
-    if (!force) {
-      const cached = getFromCache('categories');
-      if (cached && Array.isArray(cached)) return cached;
-    }
+  // ─── Public Fetch Methods ──────────────────────────────────────────────────
+  //
+  // Two calling styles supported:
+  //
+  //   Classic await (blocks if no cache):
+  //     const data = await State.fetchTransactions();
+  //
+  //   SWR callbacks (instant cache + background refresh):
+  //     State.fetchTransactions({ onCache: render, onFresh: render });
 
-    if (!navigator.onLine) {
-      const cached = getFromCache('categories');
-      return Array.isArray(cached) ? cached : [];
+  function fetchTransactions(optionsOrForce) {
+    if (optionsOrForce === true) {
+      clearCache();
+      return fetchWithSWR('transactions', () => window.api.getTransactions());
     }
-
-    try {
-      const res = await window.api.getCategories();
-      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
-      setInCache('categories', data);
-      return data;
-    } catch (err) {
-      console.error(err);
-      window.UI.showToast("Failed to fetch categories", "error");
-      return getFromCache('categories') || [];
-    }
+    const cb = (optionsOrForce && typeof optionsOrForce === 'object') ? optionsOrForce : {};
+    return fetchWithSWR('transactions', () => window.api.getTransactions(), cb);
   }
 
-  async function fetchTransactions(force = false) {
-    if (!force) {
-      const cached = getFromCache('transactions');
-      if (cached && Array.isArray(cached)) return cached;
+  function fetchAccounts(optionsOrForce) {
+    if (optionsOrForce === true) {
+      clearCache();
+      return fetchWithSWR('accounts', () => window.api.getAccounts());
     }
-
-    if (!navigator.onLine) {
-      const cached = getFromCache('transactions');
-      return Array.isArray(cached) ? cached : [];
-    }
-
-    try {
-      const res = await window.api.getTransactions();
-      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
-      setInCache('transactions', data);
-      return data;
-    } catch (err) {
-      console.error(err);
-      window.UI.showToast("Failed to fetch transactions", "error");
-      return getFromCache('transactions') || [];
-    }
+    const cb = (optionsOrForce && typeof optionsOrForce === 'object') ? optionsOrForce : {};
+    return fetchWithSWR('accounts', () => window.api.getAccounts(), cb);
   }
+
+  function fetchCategories(optionsOrForce) {
+    if (optionsOrForce === true) {
+      clearCache();
+      return fetchWithSWR('categories', () => window.api.getCategories());
+    }
+    const cb = (optionsOrForce && typeof optionsOrForce === 'object') ? optionsOrForce : {};
+    return fetchWithSWR('categories', () => window.api.getCategories(), cb);
+  }
+
+  // ─── Mutation Methods ──────────────────────────────────────────────────────
 
   async function addTransaction(tx) {
     if (!navigator.onLine) {
       window.OfflineSync.enqueueRequest('addTransaction', tx);
-      return tx; 
+      return tx;
     }
     try {
       const res = await window.api.addTransaction(tx);
-      clearCache(); // Invalidate cache
+      clearCache();
       return res.data || res;
     } catch (e) {
-      window.UI.showToast("Error saving transaction", "error");
+      window.UI.showToast('Error saving transaction', 'error');
       throw e;
     }
   }
@@ -136,7 +193,7 @@ window.State = (() => {
       clearCache();
       return res.data || res;
     } catch (e) {
-      window.UI.showToast("Error updating transaction", "error");
+      window.UI.showToast('Error updating transaction', 'error');
       throw e;
     }
   }
@@ -150,7 +207,7 @@ window.State = (() => {
       await window.api.deleteTransaction(id);
       clearCache();
     } catch (e) {
-      window.UI.showToast("Error deleting transaction", "error");
+      window.UI.showToast('Error deleting transaction', 'error');
       throw e;
     }
   }
@@ -165,7 +222,7 @@ window.State = (() => {
       clearCache();
       return res.data || res;
     } catch (e) {
-      window.UI.showToast("Error saving account", "error");
+      window.UI.showToast('Error saving account', 'error');
       throw e;
     }
   }
@@ -180,7 +237,7 @@ window.State = (() => {
       clearCache();
       return res.data || res;
     } catch (e) {
-      window.UI.showToast("Error updating account", "error");
+      window.UI.showToast('Error updating account', 'error');
       throw e;
     }
   }
@@ -194,21 +251,23 @@ window.State = (() => {
       await window.api.deleteAccount(id);
       clearCache();
     } catch (e) {
-      window.UI.showToast("Error deleting account", "error");
+      window.UI.showToast('Error deleting account', 'error');
       throw e;
     }
   }
 
   return {
+    fetchTransactions,
     fetchAccounts,
     fetchCategories,
-    fetchTransactions,
     addTransaction,
     updateTransaction,
     deleteTransaction,
     addAccount,
     updateAccount,
     deleteAccount,
-    clearCache
+    clearCache,
+    getCached,
+    hasCached,
   };
 })();

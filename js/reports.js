@@ -32,19 +32,39 @@ let currentReportData = {
 };
 
 async function fetchAndRenderReport() {
+    const timeframe = document.getElementById('timeframeFilter').value;
+
+    // ── SWR Pass 1: render from cache instantly ───────────────────────────────
+    const cachedTxs  = State.getCached('transactions');
+    const cachedAccs = State.getCached('accounts');
+
+    if (cachedTxs && cachedAccs) {
+        allTransactions = cachedTxs;
+        accountsList    = cachedAccs;
+        renderReport(timeframe);
+    }
+
+    // ── SWR Pass 2: fetch fresh in background ────────────────────────────────
     try {
         const [txs, accs] = await Promise.all([
             State.fetchTransactions(),
             State.fetchAccounts()
         ]);
-        allTransactions = txs;
-        accountsList = accs;
-        renderReport(document.getElementById('timeframeFilter').value);
+
+        const changed = JSON.stringify(txs)  !== JSON.stringify(cachedTxs) ||
+                        JSON.stringify(accs) !== JSON.stringify(cachedAccs);
+
+        if (!cachedTxs || changed) {
+            allTransactions = txs;
+            accountsList    = accs;
+            renderReport(document.getElementById('timeframeFilter').value);
+        }
     } catch (err) {
-        console.error("Failed to load reports data:", err);
-        UI.showToast("Failed to load report data", "error");
+        console.error('Failed to load reports data:', err);
+        if (!cachedTxs) UI.showToast('Failed to load report data', 'error');
     }
 }
+
 
 // Fixed distinct colors for categories
 const categoryColors = [

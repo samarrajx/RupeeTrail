@@ -39,40 +39,57 @@ const deleteTxBtn = document.getElementById('deleteTxBtn');
 const closeSheetBtn = document.getElementById('closeSheetBtn');
 
 async function fetchAndRenderTransactions() {
+    // ── SWR Pass 1: render from cache instantly ───────────────────────────────
+    const cachedTxs  = State.getCached('transactions');
+    const cachedAccs = State.getCached('accounts');
+    const cachedCats = State.getCached('categories');
+
+    if (cachedTxs && cachedAccs && cachedCats) {
+        transactions = cachedTxs.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+        accounts     = cachedAccs;
+        categories   = cachedCats;
+        renderTransactions();
+        populateFormDropdowns();
+    }
+
+    // ── SWR Pass 2: fetch fresh in background ────────────────────────────────
     try {
         const [txs, accs, cats] = await Promise.all([
             State.fetchTransactions(),
             State.fetchAccounts(),
             State.fetchCategories()
         ]);
-        transactions = txs;
-        accounts = accs;
-        categories = cats;
-        
-        // Sort newest first
-        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+        const changed = JSON.stringify(txs)  !== JSON.stringify(cachedTxs)  ||
+                        JSON.stringify(accs) !== JSON.stringify(cachedAccs) ||
+                        JSON.stringify(cats) !== JSON.stringify(cachedCats);
 
-
-        renderTransactions();
-        
-        // Populate account dropdown
-        if (fAccount) {
-            const opts = accounts.map(a => `<option value="${UI.escapeHtml(a.id)}">${UI.escapeHtml(a.name)} (${UI.formatCurrency(a.balance)})</option>`).join('');
-            fAccount.innerHTML = opts || '<option value="" disabled>No accounts available</option>';
+        if (!cachedTxs || changed) {
+            transactions = txs.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+            accounts     = accs;
+            categories   = cats;
+            renderTransactions();
+            populateFormDropdowns();
         }
-
-        // Populate category dropdown
-        if (fCategory) {
-            const opts = categories.map(c => `<option value="${UI.escapeHtml(c.name)}">${UI.escapeHtml(c.name)}</option>`).join('');
-            fCategory.innerHTML = opts || '<option value="Other">Other</option>';
-        }
-
     } catch (err) {
-        console.error("Failed to load transactions", err);
-        transactionsContainer.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please pull to refresh', '<i class="bx bx-error"></i>');
+        console.error('Failed to load transactions', err);
+        if (!cachedTxs) {
+            transactionsContainer.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please try again.', '<i class="bx bx-error"></i>');
+        }
     }
 }
+
+function populateFormDropdowns() {
+    if (fAccount) {
+        const opts = accounts.map(a => `<option value="${UI.escapeHtml(a.id)}">${UI.escapeHtml(a.name)} (${UI.formatCurrency(a.balance)})</option>`).join('');
+        fAccount.innerHTML = opts || '<option value="" disabled>No accounts available</option>';
+    }
+    if (fCategory) {
+        const opts = categories.map(c => `<option value="${UI.escapeHtml(c.name)}">${UI.escapeHtml(c.name)}</option>`).join('');
+        fCategory.innerHTML = opts || '<option value="Other">Other</option>';
+    }
+}
+
 
 function formatDateHeader(dateStr) {
     const d = new Date(dateStr);

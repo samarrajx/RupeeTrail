@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rupeetrail-cache-v2';
+const CACHE_NAME = 'rupeetrail-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,6 +23,7 @@ const ASSETS_TO_CACHE = [
   './js/transactions.js',
   './js/accounts.js',
   './js/reports.js',
+  './js/settings.js',
   'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js'
 ];

@@ -21,9 +21,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function fetchAndRenderDashboard() {
+    // ── SWR: render from cache first, then silently refresh ──────────────────
+    // Check if we have any cached data to render immediately
+    const cachedAccounts     = State.getCached('accounts');
+    const cachedTransactions = State.getCached('transactions');
+
+    if (cachedAccounts && cachedTransactions) {
+        // Render instantly from cache (no skeleton wait!)
+        renderDashboardData(cachedAccounts, cachedTransactions);
+    }
+
+    // Fetch fresh data in the background (or blocking if no cache)
+    const [accounts, transactions] = await Promise.all([
+        State.fetchAccounts({
+            onFresh: (fresh) => {
+                // Will be used together with fresh transactions below
+            }
+        }),
+        State.fetchTransactions({
+            onFresh: (fresh) => {
+                // Re-render when both are fresh — handled below
+            }
+        })
+    ]);
+
+    // If we had cache, re-render with fresh data if anything changed
+    if (cachedAccounts && cachedTransactions) {
+        const accountsChanged     = JSON.stringify(accounts) !== JSON.stringify(cachedAccounts);
+        const transactionsChanged = JSON.stringify(transactions) !== JSON.stringify(cachedTransactions);
+        if (accountsChanged || transactionsChanged) {
+            renderDashboardData(accounts, transactions);
+        }
+    } else {
+        // First load — no cache existed, render now
+        renderDashboardData(accounts, transactions);
+    }
+}
+
+async function renderDashboardData(accounts, transactions) {
     try {
-        const accounts = await State.fetchAccounts();
-        const transactions = await State.fetchTransactions();
         
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0]; // "YYYY-MM-DD"
