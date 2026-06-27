@@ -98,7 +98,8 @@ html {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: var(--space-6) var(--space-4);
-  padding-bottom: 140px; /* Space for Bottom Nav + FAB */
+  /* Space for Bottom Nav (70px) + safe area + FAB (56px) + gap */
+  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 80px);
 }
 
 /* Sidebar (Hidden on Mobile) */
@@ -183,16 +184,19 @@ html {
   left: 0;
   right: 0;
   width: 100%;
-  height: 70px;
+  /* height expands to fit 70px of nav + safe area inset */
+  height: calc(70px + env(safe-area-inset-bottom, 0px));
   background-color: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  /* align items to the top 70px, not the full height (which includes safe area) */
+  align-items: flex-start;
+  padding-top: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   z-index: 10;
-  padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
   border-radius: 20px 20px 0 0;
 }
@@ -205,7 +209,8 @@ html {
   color: var(--text-muted);
   gap: 4px;
   flex: 1;
-  height: 100%;
+  /* fixed 70px so items don't stretch into the safe-area region */
+  height: 70px;
   text-decoration: none;
   touch-action: manipulation;
   transition: all var(--bounce-spring);
@@ -250,7 +255,8 @@ html {
 /* FAB (Mobile Only) */
 .fab {
   position: fixed;
-  bottom: 90px;
+  /* sit above the full nav height (70px nav + safe area) + 20px gap */
+  bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 20px);
   right: var(--space-4);
   width: 56px;
   height: 56px;
