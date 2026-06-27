@@ -184,18 +184,25 @@ html {
   left: 0;
   right: 0;
   width: 100%;
-  /* height expands to fit 70px of nav + safe area inset */
+  /*
+   * border-box math:
+   * total height  = 70px (nav) + env(safe-area-inset-bottom)
+   * padding-bottom= env(safe-area-inset-bottom)
+   * content height= 70px  ← flex items center inside this
+   * Result: icons sit in the 70px zone, background fills the gesture area below.
+   * Requires viewport-fit=cover on the <meta viewport> tag.
+   */
   height: calc(70px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   background-color: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-around;
-  /* align items to the top 70px, not the full height (which includes safe area) */
-  align-items: flex-start;
-  padding-top: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  align-items: center;
   z-index: 10;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
   border-radius: 20px 20px 0 0;
@@ -209,8 +216,9 @@ html {
   color: var(--text-muted);
   gap: 4px;
   flex: 1;
-  /* fixed 70px so items don't stretch into the safe-area region */
-  height: 70px;
+  /* Must not exceed the 70px content area of .bottom-nav */
+  max-height: 70px;
+  height: 100%;
   text-decoration: none;
   touch-action: manipulation;
   transition: all var(--bounce-spring);
