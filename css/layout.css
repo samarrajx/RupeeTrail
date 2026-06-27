@@ -56,8 +56,9 @@ html {
   height: 100vh;
   height: 100dvh;
   width: 100vw;
-  overflow: visible;
+  overflow: hidden;
   background-color: transparent;
+  animation: layoutSlideIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .app-main {
@@ -65,7 +66,7 @@ html {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   min-width: 320px;
 }
 
@@ -134,8 +135,8 @@ html {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: var(--space-6) var(--space-4);
-  /* Space for Bottom Nav (70px) + safe area + FAB (56px) + gap */
-  padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px) + 80px);
+  /* Space for FAB only — nav is now a flex child below */
+  padding-bottom: 90px;
 }
 
 /* Sidebar (Hidden on Mobile) */
@@ -215,19 +216,12 @@ html {
 
 /* Bottom Navigation (Mobile Only) */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  /*
-   * border-box math:
-   * total height  = 70px (nav) + env(safe-area-inset-bottom)
-   * padding-bottom= env(safe-area-inset-bottom)
-   * content height= 70px  ← flex items center inside this
-   * Result: icons sit in the 70px zone, background fills the gesture area below.
-   * Requires viewport-fit=cover on the <meta viewport> tag.
+  /* Flex child — sits naturally at bottom of .app-main column.
+   * No position:fixed needed; avoids the Android Chrome PWA
+   * containing-block bug where fixed children get trapped.
    */
+  flex-shrink: 0;
+  width: 100%;
   height: calc(70px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
@@ -317,6 +311,8 @@ html {
   touch-action: manipulation;
   z-index: 15;
   transition: all var(--bounce-spring);
+  /* Force own compositing layer — prevents clipping on some Android versions */
+  will-change: transform;
 }
 
 .fab:hover {
