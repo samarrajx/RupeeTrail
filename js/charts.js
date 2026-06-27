@@ -4,6 +4,9 @@ window.ChartsManager = (() => {
   // Global defaults for Chart.js
   Chart.defaults.font.family = "'Inter', sans-serif";
   
+  // A registry to safely destroy charts before re-rendering
+  const registry = {};
+
   function updateChartDefaults() {
     const style = getComputedStyle(document.documentElement);
     Chart.defaults.color = style.getPropertyValue('--text-secondary').trim();
@@ -32,9 +35,6 @@ window.ChartsManager = (() => {
     });
   });
   observer.observe(document.documentElement, { attributes: true });
-  
-  // A registry to safely destroy charts before re-rendering
-  const registry = {};
 
   function destroyChart(id) {
     if (registry[id]) {
