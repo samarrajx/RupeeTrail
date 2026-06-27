@@ -1,6 +1,14 @@
 // api.js
 // Frontend API layer handling communication with the Google Apps Script backend.
 
+window.hashPin = async function(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 class ApiClient {
     constructor() {
         this.baseUrl = CONFIG.API_URL;
@@ -47,11 +55,11 @@ class ApiClient {
             const data = await response.json();
             
             // Standardize error handling from backend
-            if (data && data.success === false) {
-                throw new Error(data.error || 'API Error');
+            if (data && data.status === 'error') {
+                throw new Error(data.message || 'API Error');
             }
             
-            return data;
+            return data.data !== undefined ? data.data : data;
         } catch (error) {
             console.error(`API Request failed (${endpoint}):`, error);
             throw error;
@@ -142,4 +150,4 @@ class ApiClient {
 }
 
 // Export a global singleton instance
-const api = new ApiClient();
+window.api = new ApiClient();

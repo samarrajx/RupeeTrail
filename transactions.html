@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/pages.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/offline.js"></script>
     <script src="js/state.js"></script>
@@ -23,7 +25,6 @@
                 <h2>RupeeTrail</h2>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-link"><i class='bx bx-home'></i> Home</a>
                 <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
                 <a href="transactions.html" class="nav-link active"><i class='bx bx-list-ul'></i> Transactions</a>
                 <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
@@ -39,7 +40,7 @@
                     <h1 class="page-title">Transactions</h1>
                 </div>
                 <div class="header-right">
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">SR</div>
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
 
@@ -50,7 +51,7 @@
                 <div class="search-filter-bar">
                     <div class="search-wrapper">
                         <i class='bx bx-search'></i>
-                        <input type="text" id="searchInput" class="search-input" placeholder="Search transactions...">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search title or category...">
                     </div>
                 </div>
 
@@ -59,25 +60,28 @@
                     <div class="chip active" data-filter="all">All</div>
                     <div class="chip" data-filter="income">Income</div>
                     <div class="chip" data-filter="expense">Expense</div>
+                    <div class="chip" data-filter="transfer">Transfer</div>
                 </div>
 
-                <!-- Transactions List -->
-                <div class="transaction-list" id="transactionsContainer">
+                <!-- Transactions List Container -->
+                <div id="transactionsContainer">
                     <!-- Rendered dynamically -->
                 </div>
                 
                 <!-- Empty State -->
-                <div id="emptyState" style="display: none;"></div>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class='bx bx-receipt'></i>
+                    <p>No transactions found.</p>
+                </div>
 
             </main>
 
             <!-- Bottom Navigation (Mobile) -->
             <nav class="bottom-nav hide-on-desktop">
-                <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Home</span></a>
                 <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
                 <a href="transactions.html" class="nav-item active"><i class='bx bx-list-ul'></i><span>Txns</span></a>
                 <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
-                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
+                <a href="accounts.html" class="nav-item"><i class='bx bx-wallet'></i><span>Accounts</span></a>
             </nav>
             
             <!-- FAB overrides default to open Bottom Sheet -->
@@ -86,7 +90,7 @@
             </button>
             
             <!-- Floating Add Button for Desktop -->
-            <button class="btn btn-primary desktop-only" id="desktopAddBtn" style="position: absolute; bottom: var(--space-6); right: var(--space-6); border-radius: var(--radius-full); padding: var(--space-3) var(--space-5); box-shadow: var(--shadow-lg);">
+            <button class="btn btn-primary hide-on-mobile" id="desktopAddBtn" style="position: absolute; bottom: var(--space-6); right: var(--space-6); border-radius: var(--radius-full); padding: var(--space-3) var(--space-5); box-shadow: var(--shadow-lg);">
                 <i class='bx bx-plus' style="margin-right: 0.5rem;"></i> New Transaction
             </button>
         </div>
@@ -106,15 +110,16 @@
                 
                 <!-- Type Toggle -->
                 <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-4); background: var(--bg-surface-hover); padding: 0.25rem; border-radius: var(--radius-base);">
-                    <button type="button" id="btnExpense" class="btn" style="flex: 1; background: white; box-shadow: var(--shadow-sm); color: var(--color-danger);">Expense</button>
+                    <button type="button" id="btnExpense" class="btn" style="flex: 1; background: var(--bg-surface); box-shadow: var(--shadow-sm); color: var(--color-danger);">Expense</button>
                     <button type="button" id="btnIncome" class="btn btn-ghost" style="flex: 1; color: var(--text-secondary);">Income</button>
+                    <button type="button" id="btnTransfer" class="btn btn-ghost" style="flex: 1; color: var(--text-secondary);">Transfer</button>
                 </div>
                 <input type="hidden" id="txType" value="expense">
 
                 <!-- Amount -->
                 <div class="form-group">
                     <label class="form-label">Amount (₹)</label>
-                    <input type="number" id="txAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold;">
+                    <input type="number" id="txAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold; font-family: var(--font-family-heading);">
                 </div>
 
                 <!-- Title -->
@@ -127,12 +132,7 @@
                 <div class="form-group">
                     <label class="form-label">Category</label>
                     <select id="txCategory" class="form-select" required>
-                        <option value="Food">Food</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Shopping">Shopping</option>
-                        <option value="Salary">Salary</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Other">Other</option>
+                        <!-- Populated dynamically -->
                     </select>
                 </div>
 
@@ -143,24 +143,25 @@
                 </div>
 
                 <!-- Account -->
-                <div class="form-group" style="margin-top: var(--space-4);">
+                <div class="form-group">
                     <label class="form-label">Account</label>
-                    <select id="txAccount" class="form-select" required>
-                        <option value="" disabled selected>Select an account</option>
-                    </select>
+                    <select id="txAccount" class="form-select" required></select>
                 </div>
 
-                <!-- Actions -->
+                <!-- Tags -->
+                <div class="form-group">
+                    <label class="form-label">Tags (Optional)</label>
+                    <input type="text" id="txTags" class="form-input" placeholder="e.g. vacation, gift">
+                </div>
+
                 <div style="display: flex; gap: var(--space-4); margin-top: var(--space-6);">
-                    <button type="button" id="deleteTxBtn" class="btn btn-ghost" style="display: none; color: var(--color-danger); border: 1px solid var(--color-danger);">Delete</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Transaction</button>
+                    <button type="button" id="deleteTxBtn" class="btn btn-danger" style="display: none; flex: 1;">Delete</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Save Transaction</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script src="js/config.js"></script>
-    <script src="js/api.js"></script>
     <script src="js/transactions.js"></script>
     <script src="js/pwa.js"></script>
 </body>

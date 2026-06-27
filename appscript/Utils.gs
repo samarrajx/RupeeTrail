@@ -122,7 +122,9 @@ const Utils = {
   formatDate: function(dateStr) {
     if (!dateStr) return "";
     const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
+    if (isNaN(d.getTime())) return "";
+    // Use Apps Script Utilities to format strictly in the script's timezone to prevent UTC shift
+    return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
   },
 
   /**

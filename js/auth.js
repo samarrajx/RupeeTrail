@@ -1,9 +1,15 @@
-// auth.js - Handles PIN input and Mock Authentication
+// auth.js - Handles PIN input and Authentication via API
 
 document.addEventListener('DOMContentLoaded', () => {
+    // If token exists, redirect to dashboard immediately
+    if (localStorage.getItem('rupeetrail_auth_token')) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
     const pinDisplay = document.getElementById('pinDisplay');
     const dots = pinDisplay.querySelectorAll('.pin-dot');
-    const keys = document.querySelectorAll('.key[data-key]');
+    const keys = document.querySelectorAll('.keypad-btn[data-key]');
     const btnClear = document.getElementById('keyClear');
     const btnBackspace = document.getElementById('keyBackspace');
     const authMessage = document.getElementById('authMessage');
@@ -12,20 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPin = '';
     const PIN_LENGTH = 4;
     
-    // Check if a PIN is already set in localStorage
-    const savedPin = localStorage.getItem('rupeetrail_pin');
-    let mode = savedPin ? 'verify' : 'setup';
-    let setupFirstPin = '';
+    // Clean up legacy auth keys
+    localStorage.removeItem('rupeetrail_auth');
+    localStorage.removeItem('rupeetrail_pin');
 
-    function updateMessage() {
-        if (mode === 'setup') {
-            authMessage.textContent = 'Create a 4-digit PIN';
-        } else if (mode === 'confirm') {
-            authMessage.textContent = 'Confirm your PIN';
-        } else {
-            authMessage.textContent = 'Enter your PIN';
-        }
-        authMessage.style.color = 'var(--text-secondary)';
+    function updateMessage(text, isError = false) {
+        authMessage.textContent = text;
+        authMessage.style.color = isError ? 'var(--color-danger)' : 'var(--text-secondary)';
     }
 
     function updateDots() {
@@ -39,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showError() {
+    function showError(message) {
         // Trigger shake animation
         authCard.classList.remove('shake');
         void authCard.offsetWidth; // Force reflow to restart animation
@@ -51,46 +50,34 @@ document.addEventListener('DOMContentLoaded', () => {
             dot.classList.remove('filled');
         });
         
-        authMessage.textContent = mode === 'confirm' ? 'PINs do not match. Try again.' : 'Incorrect PIN';
-        authMessage.style.color = 'var(--color-danger)';
+        updateMessage(message || 'Incorrect PIN', true);
         
         // Reset after short delay
         setTimeout(() => {
             currentPin = '';
             updateDots();
-            if (mode === 'confirm') {
-                mode = 'setup';
-                setupFirstPin = '';
-            }
-            updateMessage();
+            updateMessage('Enter your PIN');
         }, 1000);
     }
 
-    function handlePinComplete() {
-        if (mode === 'setup') {
-            setupFirstPin = currentPin;
-            currentPin = '';
-            mode = 'confirm';
-            updateMessage();
-            updateDots();
-        } else if (mode === 'confirm') {
-            if (currentPin === setupFirstPin) {
-                // Save PIN and log in
-                localStorage.setItem('rupeetrail_pin', currentPin);
-                loginSuccess();
+    async function handlePinComplete() {
+        try {
+            updateMessage('Authenticating...');
+            const hashedPin = await window.hashPin(currentPin);
+            const res = await window.api.login(hashedPin);
+            
+            if (res.token) {
+                loginSuccess(res.token);
             } else {
-                showError();
+                showError("Invalid PIN");
             }
-        } else if (mode === 'verify') {
-            if (currentPin === savedPin) {
-                loginSuccess();
-            } else {
-                showError();
-            }
+        } catch(e) {
+            console.error("Login failed", e);
+            showError(e.message || "Authentication Failed");
         }
     }
 
-    function loginSuccess() {
+    function loginSuccess(token) {
         authMessage.textContent = 'Authentication Success!';
         authMessage.style.color = 'var(--color-secondary)';
         dots.forEach(dot => {
@@ -98,8 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dot.style.borderColor = 'var(--color-secondary)';
         });
         
-        // Mock authentication token
-        localStorage.setItem('rupeetrail_auth', 'true');
+        // Store Session Token
+        localStorage.setItem('rupeetrail_auth_token', token);
         
         // Redirect to Dashboard
         setTimeout(() => {
@@ -120,39 +107,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function removeDigit() {
+    function backspace() {
         if (currentPin.length > 0) {
             currentPin = currentPin.slice(0, -1);
             updateDots();
         }
     }
 
-    function clearPin() {
+    function clear() {
         currentPin = '';
         updateDots();
     }
 
-    // Event Listeners for Screen Keypad
-    keys.forEach(key => {
-        key.addEventListener('click', () => {
-            addDigit(key.getAttribute('data-key'));
-        });
-    });
-
-    if(btnBackspace) btnBackspace.addEventListener('click', removeDigit);
-    if(btnClear) btnClear.addEventListener('click', clearPin);
-
-    // Keyboard support for numeric input
+    // Keyboard support
     document.addEventListener('keydown', (e) => {
         if (/^[0-9]$/.test(e.key)) {
             addDigit(e.key);
         } else if (e.key === 'Backspace') {
-            removeDigit();
-        } else if (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Clear') {
-            clearPin();
+            backspace();
+        } else if (e.key === 'Escape' || e.key === 'Delete') {
+            clear();
         }
     });
 
-    // Initialize UI
-    updateMessage();
+    // Touch/Click support for Keypad
+    keys.forEach(key => {
+        key.addEventListener('click', () => {
+            addDigit(key.dataset.key);
+            // Ripple effect
+            key.style.transform = 'scale(0.9)';
+            setTimeout(() => key.style.transform = 'scale(1)', 100);
+        });
+    });
+
+    if (btnBackspace) btnBackspace.addEventListener('click', backspace);
+    if (btnClear) btnClear.addEventListener('click', clear);
 });

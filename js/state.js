@@ -45,17 +45,17 @@ window.State = (() => {
   async function fetchAccounts(force = false) {
     if (!force) {
       const cached = getFromCache('accounts');
-      if (cached) return cached;
+      if (cached && Array.isArray(cached)) return cached;
     }
 
     if (!navigator.onLine) {
-      const cached = getFromCache('accounts') || [];
-      return cached;
+      const cached = getFromCache('accounts');
+      return Array.isArray(cached) ? cached : [];
     }
 
     try {
-      const res = await api.getAccounts();
-      const data = res.data || [];
+      const res = await window.api.getAccounts();
+      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
       setInCache('accounts', data);
       return data;
     } catch (err) {
@@ -65,19 +65,43 @@ window.State = (() => {
     }
   }
 
-  async function fetchTransactions(force = false) {
+  async function fetchCategories(force = false) {
     if (!force) {
-      const cached = getFromCache('transactions');
-      if (cached) return cached;
+      const cached = getFromCache('categories');
+      if (cached && Array.isArray(cached)) return cached;
     }
 
     if (!navigator.onLine) {
-      return getFromCache('transactions') || [];
+      const cached = getFromCache('categories');
+      return Array.isArray(cached) ? cached : [];
     }
 
     try {
-      const res = await api.getTransactions();
-      const data = res.data || [];
+      const res = await window.api.getCategories();
+      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
+      setInCache('categories', data);
+      return data;
+    } catch (err) {
+      console.error(err);
+      window.UI.showToast("Failed to fetch categories", "error");
+      return getFromCache('categories') || [];
+    }
+  }
+
+  async function fetchTransactions(force = false) {
+    if (!force) {
+      const cached = getFromCache('transactions');
+      if (cached && Array.isArray(cached)) return cached;
+    }
+
+    if (!navigator.onLine) {
+      const cached = getFromCache('transactions');
+      return Array.isArray(cached) ? cached : [];
+    }
+
+    try {
+      const res = await window.api.getTransactions();
+      const data = (res.data && Array.isArray(res.data.data)) ? res.data.data : (res.data || res || []);
       setInCache('transactions', data);
       return data;
     } catch (err) {
@@ -93,7 +117,7 @@ window.State = (() => {
       return tx; 
     }
     try {
-      const res = await api.addTransaction(tx);
+      const res = await window.api.addTransaction(tx);
       clearCache(); // Invalidate cache
       window.UI.showToast("Transaction saved", "success");
       return res.data || res;
@@ -109,7 +133,7 @@ window.State = (() => {
       return tx;
     }
     try {
-      const res = await api.updateTransaction(id, tx);
+      const res = await window.api.updateTransaction(id, tx);
       clearCache();
       window.UI.showToast("Transaction updated", "success");
       return res.data || res;
@@ -125,7 +149,7 @@ window.State = (() => {
       return;
     }
     try {
-      await api.deleteTransaction(id);
+      await window.api.deleteTransaction(id);
       clearCache();
       window.UI.showToast("Transaction deleted", "success");
     } catch (e) {
@@ -140,7 +164,7 @@ window.State = (() => {
       return acc;
     }
     try {
-      const res = await api.addAccount(acc);
+      const res = await window.api.addAccount(acc);
       clearCache();
       window.UI.showToast("Account saved", "success");
       return res.data || res;
@@ -156,7 +180,7 @@ window.State = (() => {
       return acc;
     }
     try {
-      const res = await api.updateAccount(id, acc);
+      const res = await window.api.updateAccount(id, acc);
       clearCache();
       window.UI.showToast("Account updated", "success");
       return res.data || res;
@@ -172,7 +196,7 @@ window.State = (() => {
       return;
     }
     try {
-      await api.deleteAccount(id);
+      await window.api.deleteAccount(id);
       clearCache();
       window.UI.showToast("Account deleted", "success");
     } catch (e) {
@@ -183,6 +207,7 @@ window.State = (() => {
 
   return {
     fetchAccounts,
+    fetchCategories,
     fetchTransactions,
     addTransaction,
     updateTransaction,

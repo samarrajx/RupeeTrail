@@ -1,5 +1,13 @@
 // js/accounts.js
 
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('rupeetrail_auth_token')) {
+        window.location.href = 'index.html';
+        return;
+    }
+    fetchAndRenderAccounts();
+});
+
 let accounts = [];
 
 // DOM Elements
@@ -10,7 +18,9 @@ const totalNetWorth = document.getElementById('totalNetWorth');
 const accountForm = document.getElementById('accountForm');
 const accId = document.getElementById('accId');
 const accName = document.getElementById('accName');
+const accType = document.getElementById('accType');
 const accBalance = document.getElementById('accBalance');
+const accIcon = document.getElementById('accIcon');
 const accTheme = document.getElementById('accTheme');
 const deleteAccBtn = document.getElementById('deleteAccBtn');
 const accountSheetTitle = document.getElementById('accountSheetTitle');
@@ -19,6 +29,7 @@ const transferForm = document.getElementById('transferForm');
 const transferFrom = document.getElementById('transferFrom');
 const transferTo = document.getElementById('transferTo');
 const transferAmount = document.getElementById('transferAmount');
+const transferNote = document.getElementById('transferNote');
 
 async function fetchAndRenderAccounts() {
     try {
@@ -27,18 +38,27 @@ async function fetchAndRenderAccounts() {
         let total = 0;
         
         if (accounts.length === 0) {
-            accountsGrid.innerHTML = UI.getEmptyStateHTML('No Accounts', 'Add an account to track balances.', '<path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7m8 2-3-3m3 3-3 3m3-3h-6"/>');
+            accountsGrid.innerHTML = UI.getEmptyStateHTML('No Accounts', 'Add an account to track balances.', '<i class="bx bx-wallet"></i>');
             totalNetWorth.textContent = UI.formatCurrency(0);
             return;
         }
 
-        accountsGrid.innerHTML = accounts.map(acc => {
+        accountsGrid.innerHTML = accounts.map((acc, index) => {
             total += acc.balance;
+            const icon = UI.escapeHtml(acc.icon) || 'bx-wallet';
+            const typeStr = UI.escapeHtml(acc.type) || 'Checking';
+            const safeName = UI.escapeHtml(acc.name);
             return `
-            <button class="account-card ${acc.theme} w-full text-left" style="position: relative; min-height: 140px; cursor: pointer; border: none; padding: var(--space-4); display: flex; flex-direction: column;" onclick="openAccountSheet('${acc.id}')" aria-label="Edit ${acc.name}">
-                <div class="account-name">${acc.name}</div>
-                <div class="account-balance">${UI.formatCurrency(acc.balance)}</div>
-                <div style="font-size: 0.75rem; opacity: 0.7; margin-top: auto;">**** **** **** ${Math.floor(1000 + Math.random() * 9000)}</div>
+            <button class="account-card ${UI.escapeHtml(acc.theme) || 'primary'} animate-slide-up text-left" style="position: relative; min-height: 150px; cursor: pointer; border: none; padding: var(--space-4); display: flex; flex-direction: column; opacity: 0; animation-delay: ${index * 50}ms;" onclick="openAccountSheet('${UI.escapeHtml(acc.id)}')" aria-label="Edit ${safeName}">
+                <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
+                    <i class='bx ${icon}' style="font-size: 1.5rem; opacity: 0.9;"></i>
+                    <div class="account-name" style="margin: 0; font-size: 1.1rem;">${safeName}</div>
+                </div>
+                <div class="account-balance" style="font-size: 1.8rem;">${UI.formatCurrency(acc.balance)}</div>
+                <div style="font-size: 0.85rem; opacity: 0.8; margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
+                    <span>${typeStr}</span>
+                    <span>**** ${Math.floor(1000 + Math.random() * 9000)}</span>
+                </div>
                 <div class="btn btn-ghost" style="position: absolute; top: var(--space-2); right: var(--space-2); color: white; padding: 0.25rem;"><i class='bx bx-edit-alt'></i></div>
             </button>
             `;
@@ -46,7 +66,7 @@ async function fetchAndRenderAccounts() {
         totalNetWorth.textContent = UI.formatCurrency(total);
     } catch (err) {
         console.error("Failed to load accounts", err);
-        accountsGrid.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please pull to refresh.', '<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />');
+        accountsGrid.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please pull to refresh.', '<i class="bx bx-error"></i>');
     }
 }
 
@@ -59,8 +79,10 @@ window.openAccountSheet = function(id = null) {
         if (!acc) return;
         accId.value = acc.id;
         accName.value = acc.name;
+        accType.value = acc.type || 'Checking';
         accBalance.value = acc.balance;
-        accTheme.value = acc.theme;
+        accIcon.value = acc.icon || 'bx-wallet';
+        accTheme.value = acc.theme || 'primary';
         accountSheetTitle.textContent = "Edit Account";
         deleteAccBtn.style.display = "block";
     } else {
@@ -76,25 +98,32 @@ accountForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = accId.value;
     const newAcc = {
-        name: accName.value,
+        name: accName.value.trim(),
+        type: accType.value,
         balance: parseFloat(accBalance.value),
+        icon: accIcon.value,
         theme: accTheme.value
     };
+
+    if (!newAcc.name) {
+        UI.showToast("Account name is required", "error");
+        return;
+    }
 
     const btn = e.submitter;
     btn.disabled = true;
     const originalText = btn.textContent;
-    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving...`;
+    btn.innerHTML = `Saving...`;
 
     try {
         if (id) {
             await State.updateAccount(id, newAcc);
         } else {
+            newAcc.id = 'acc_' + Date.now();
             await State.addAccount(newAcc);
         }
         UI.closeSheet();
         await fetchAndRenderAccounts();
-        UI.showToast("Account saved successfully", "success");
     } catch (err) {
         console.error(err);
         UI.showToast("Failed to save account", "error");
@@ -106,15 +135,25 @@ accountForm.addEventListener('submit', async (e) => {
 
 window.deleteAccount = async function() {
     const id = accId.value;
-    if (confirm("Are you sure you want to delete this account?")) {
+    if (!id) return;
+
+    // Fetch transactions to see if there are linked ones
+    const txs = await State.fetchTransactions(true);
+    const hasLinked = txs.some(tx => tx.accountId === id);
+    
+    let msg = "Are you sure you want to delete this account?";
+    if (hasLinked) {
+        msg = "WARNING: This account has linked transactions. Deleting it may orphan them. Are you REALLY sure?";
+    }
+
+    if (confirm(msg)) {
         const btn = deleteAccBtn;
         btn.disabled = true;
-        btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i>`;
+        btn.textContent = "Deleting...";
         try {
             await State.deleteAccount(id);
             UI.closeSheet();
             await fetchAndRenderAccounts();
-            UI.showToast("Account deleted", "success");
         } catch (err) {
             console.error(err);
             UI.showToast("Failed to delete account", "error");
@@ -131,10 +170,9 @@ window.openTransferSheet = function() {
         UI.showToast("You need at least 2 accounts to transfer.", "error");
         return;
     }
-    const opts = accounts.map(a => `<option value="${a.id}">${a.name} (${UI.formatCurrency(a.balance)})</option>`).join('');
+    const opts = accounts.map(a => `<option value="${UI.escapeHtml(a.id)}">${UI.escapeHtml(a.name)} (${UI.formatCurrency(a.balance)})</option>`).join('');
     transferFrom.innerHTML = opts;
     transferTo.innerHTML = opts;
-    // Set To as the second account by default
     transferTo.selectedIndex = 1;
     
     transferForm.reset();
@@ -146,9 +184,14 @@ transferForm.addEventListener('submit', async (e) => {
     const fromId = transferFrom.value;
     const toId = transferTo.value;
     const amount = parseFloat(transferAmount.value);
+    const note = transferNote.value.trim();
 
     if (fromId === toId) {
         UI.showToast("Cannot transfer to the same account.", "error");
+        return;
+    }
+    if (!amount || amount <= 0) {
+        UI.showToast("Invalid amount.", "error");
         return;
     }
 
@@ -156,14 +199,15 @@ transferForm.addEventListener('submit', async (e) => {
     const toAcc = accounts.find(a => a.id === toId);
 
     if (fromAcc.balance < amount) {
-        UI.showToast("Insufficient funds.", "error");
-        return;
+        if(!confirm(`The from account doesn't have enough balance. Proceed anyway?`)) {
+            return;
+        }
     }
 
     const btn = e.submitter;
     btn.disabled = true;
     const originalText = btn.textContent;
-    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Transferring...`;
+    btn.textContent = `Transferring...`;
 
     try {
         // Update both accounts
@@ -173,36 +217,49 @@ transferForm.addEventListener('submit', async (e) => {
         await State.updateAccount(fromId, fromAcc);
         await State.updateAccount(toId, toAcc);
 
-        // Add transfer transaction
+        const dateStr = new Date().toISOString().split('T')[0];
+        const baseNote = note ? ` - ${note}` : '';
+
+        // Debit Transaction
         await State.addTransaction({
-            date: new Date().toISOString().split('T')[0],
+            id: 'tx_out_' + Date.now(),
+            date: dateStr,
             accountId: fromId,
             category: "Transfer",
             amount: amount,
-            type: "expense",
-            title: `Transfer to ${toAcc.name}`
+            type: "transfer",
+            title: `Transfer to ${toAcc.name}${baseNote}`
         });
+
+        // Credit Transaction (small delay to ensure unique ID)
+        setTimeout(async () => {
+            await State.addTransaction({
+                id: 'tx_in_' + Date.now(),
+                date: dateStr,
+                accountId: toId,
+                category: "Transfer",
+                amount: amount,
+                type: "transfer", // Using transfer type for both, since transactions.js shows transfer as blue. Income/Expense would color it. But in a full app we might want to color the 'in' as green. We'll leave it as transfer.
+                title: `Transfer from ${fromAcc.name}${baseNote}`
+            });
+        }, 50);
 
         UI.closeSheet();
         await fetchAndRenderAccounts();
-        UI.showToast(`Transferred ${UI.formatCurrency(amount)} successfully`, "success");
     } catch (err) {
         console.error(err);
         UI.showToast("Transfer failed", "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = `Transfer`;
+        btn.textContent = originalText;
     }
 });
 
-// Auto Format Currency
 const formatCurrencyInput = (e) => {
     e.target.value = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
 };
 if(accBalance) accBalance.addEventListener('input', formatCurrencyInput);
 if(transferAmount) transferAmount.addEventListener('input', formatCurrencyInput);
 
-document.getElementById('sheetOverlay').addEventListener('click', UI.closeSheet);
-
-// Initialize
-document.addEventListener('DOMContentLoaded', fetchAndRenderAccounts);
+const overlay = document.getElementById('sheetOverlay');
+if(overlay) overlay.addEventListener('click', UI.closeSheet);

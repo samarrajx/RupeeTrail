@@ -27,21 +27,21 @@ const Auth = {
 
   /**
    * Validates PIN structure based on security policies.
-   * Ensures PIN is numeric, within bounds, and sanitized.
+   * Ensures PIN is a valid SHA-256 hash since the frontend now pre-hashes the PIN.
    */
   _validatePinInput: function(pin) {
     if (pin === undefined || pin === null) {
-      throw new Error("PIN is required.");
+      throw new Error("PIN hash is required.");
     }
     const trimmed = String(pin).trim();
     if (trimmed === "") {
-      throw new Error("PIN cannot be empty.");
+      throw new Error("PIN hash cannot be empty.");
     }
-    if (trimmed.length < 4 || trimmed.length > 12) {
-      throw new Error("PIN must be between 4 and 12 characters.");
+    if (trimmed.length !== 64) {
+      throw new Error("PIN hash must be 64 characters.");
     }
-    if (!/^\d+$/.test(trimmed)) {
-      throw new Error("PIN must be numeric.");
+    if (!/^[a-fA-F0-9]+$/.test(trimmed)) {
+      throw new Error("PIN hash must be a valid hex string.");
     }
     return trimmed;
   },
@@ -104,9 +104,9 @@ const Auth = {
       return Utils.buildError("Invalid PIN"); // Generic error masking missing payload
     }
 
-    let rawPin;
+    let inputHash;
     try {
-      rawPin = this._validatePinInput(payload.pin);
+      inputHash = this._validatePinInput(payload.pin);
     } catch (e) {
       Utils.log("LOGIN_FAILED", "User", "auth", `Validation error: ${e.message}`);
       return Utils.buildError(e.message);
@@ -114,7 +114,6 @@ const Auth = {
 
     const authSettings = this._getAuthSettings();
     let storedHash = authSettings.pin_hash;
-    const inputHash = this._hashPin(rawPin);
 
     // If no PIN is set, accept any PIN and securely set it (First time setup behavior)
     if (!storedHash) {
@@ -213,19 +212,19 @@ const Auth = {
     
     Utils.validateRequired(payload, ['oldPin', 'newPin']);
     
-    const rawOldPin = this._validatePinInput(payload.oldPin);
-    const rawNewPin = this._validatePinInput(payload.newPin);
+    const oldPinHash = this._validatePinInput(payload.oldPin);
+    const newPinHash = this._validatePinInput(payload.newPin);
     
     const authSettings = this._getAuthSettings();
     
-    if (authSettings.pin_hash !== this._hashPin(rawOldPin)) {
+    if (authSettings.pin_hash !== oldPinHash) {
       Utils.log("CHANGE_PIN_FAILED", "User", "auth", "Invalid old PIN provided");
       throw new Error("Invalid current PIN.");
     }
     
     // Process PIN change and forcibly log out active sessions simultaneously
     this._batchSetSettings({
-      "pin_hash": this._hashPin(rawNewPin),
+      "pin_hash": newPinHash,
       "session_token": "",
       "session_expiry": ""
     });

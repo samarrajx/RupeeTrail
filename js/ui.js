@@ -120,7 +120,27 @@ window.UI = (() => {
   }
 
   function formatCurrency(num) {
-    return '₹' + Number(num).toLocaleString('en-IN');
+    let sym = '₹';
+    let fmt = 'en-IN';
+    try {
+      const stored = localStorage.getItem('rupeetrail_settings');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.currencySymbol) sym = parsed.currencySymbol;
+        if (parsed.numberFormat) fmt = parsed.numberFormat;
+      }
+    } catch(e) {}
+    return sym + Number(num).toLocaleString(fmt);
+  }
+
+  function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
   }
 
   return {
@@ -129,6 +149,7 @@ window.UI = (() => {
     closeSheet,
     getEmptyStateHTML,
     debounce,
-    formatCurrency
+    formatCurrency,
+    escapeHtml
   };
 })();

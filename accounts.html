@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/pages.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/offline.js"></script>
     <script src="js/state.js"></script>
@@ -21,7 +23,6 @@
         <aside class="app-sidebar hide-on-mobile">
             <div class="sidebar-header"><h2>RupeeTrail</h2></div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-link"><i class='bx bx-home'></i> Home</a>
                 <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
                 <a href="transactions.html" class="nav-link"><i class='bx bx-list-ul'></i> Transactions</a>
                 <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
@@ -35,7 +36,7 @@
             <header class="app-header">
                 <div class="header-left"><h1 class="page-title">Accounts</h1></div>
                 <div class="header-right">
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">SR</div>
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
 
@@ -43,7 +44,7 @@
                 <!-- Net Worth -->
                 <div class="net-worth-card" id="netWorthCard">
                     <p style="margin-bottom: var(--space-1); opacity: 0.9; font-size: var(--font-size-sm);">Total Net Worth</p>
-                    <h2 id="totalNetWorth" style="margin: 0; font-size: 2.5rem;">₹0</h2>
+                    <h2 id="totalNetWorth" style="margin: 0; font-size: 2.5rem; font-family: var(--font-family-heading);">₹0</h2>
                 </div>
 
                 <!-- Actions -->
@@ -69,11 +70,10 @@
 
             <!-- Bottom Navigation -->
             <nav class="bottom-nav hide-on-desktop">
-                <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Home</span></a>
                 <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
                 <a href="transactions.html" class="nav-item"><i class='bx bx-list-ul'></i><span>Txns</span></a>
                 <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
-                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
+                <a href="accounts.html" class="nav-item active"><i class='bx bx-wallet'></i><span>Accounts</span></a>
             </nav>
         </div>
     </div>
@@ -84,8 +84,8 @@
     <!-- Account Bottom Sheet (Add/Edit) -->
     <div class="bottom-sheet" id="accountSheet">
         <div class="bottom-sheet-header">
-            <h3 id="accountSheetTitle" style="margin: 0;">Add Account</h3>
-            <button class="btn btn-ghost" style="padding: 0; font-size: 1.5rem;" onclick="closeAllSheets()"><i class='bx bx-x'></i></button>
+            <h3 id="accountSheetTitle" style="margin: 0; font-family: var(--font-family-heading);">Add Account</h3>
+            <button class="btn btn-ghost" style="padding: 0; font-size: 1.5rem;" onclick="UI.closeSheet()"><i class='bx bx-x'></i></button>
         </div>
         <div class="bottom-sheet-body">
             <form id="accountForm">
@@ -94,21 +94,46 @@
                     <label class="form-label">Account Name</label>
                     <input type="text" id="accName" class="form-input" placeholder="e.g. HDFC Savings" required>
                 </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Account Type</label>
+                    <select id="accType" class="form-select" required>
+                        <option value="Checking">Checking</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Wallet">Wallet / Cash</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Starting Balance (₹)</label>
-                    <input type="number" id="accBalance" class="form-input" placeholder="0.00" required step="0.01">
+                    <input type="number" id="accBalance" class="form-input" placeholder="0.00" required step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold; font-family: var(--font-family-heading);">
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Account Icon</label>
+                    <select id="accIcon" class="form-select" required>
+                        <option value="bx-wallet">Wallet</option>
+                        <option value="bx-credit-card">Credit Card</option>
+                        <option value="bx-money">Cash</option>
+                        <option value="bx-buildings">Bank</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Theme Color</label>
                     <select id="accTheme" class="form-select" required>
                         <option value="primary">Blue (Primary)</option>
                         <option value="secondary">Dark (Secondary)</option>
                         <option value="tertiary">Teal (Tertiary)</option>
+                        <option value="danger">Red</option>
+                        <option value="warning">Orange</option>
                     </select>
                 </div>
+
                 <div style="display: flex; gap: var(--space-4); margin-top: var(--space-6);">
-                    <button type="button" id="deleteAccBtn" class="btn btn-ghost" style="display: none; color: var(--color-danger); border: 1px solid var(--color-danger);" onclick="deleteAccount()">Delete</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Account</button>
+                    <button type="button" id="deleteAccBtn" class="btn btn-danger" style="display: none; flex: 1;" onclick="deleteAccount()">Delete</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Save Account</button>
                 </div>
             </form>
         </div>
@@ -117,8 +142,8 @@
     <!-- Transfer Bottom Sheet -->
     <div class="bottom-sheet" id="transferSheet">
         <div class="bottom-sheet-header">
-            <h3 style="margin: 0;">Transfer Money</h3>
-            <button class="btn btn-ghost" style="padding: 0; font-size: 1.5rem;" onclick="closeAllSheets()"><i class='bx bx-x'></i></button>
+            <h3 style="margin: 0; font-family: var(--font-family-heading);">Transfer Money</h3>
+            <button class="btn btn-ghost" style="padding: 0; font-size: 1.5rem;" onclick="UI.closeSheet()"><i class='bx bx-x'></i></button>
         </div>
         <div class="bottom-sheet-body">
             <form id="transferForm">
@@ -135,15 +160,17 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Amount (₹)</label>
-                    <input type="number" id="transferAmount" class="form-input" placeholder="0.00" required min="1" step="0.01">
+                    <input type="number" id="transferAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold; font-family: var(--font-family-heading);">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Note (Optional)</label>
+                    <input type="text" id="transferNote" class="form-input" placeholder="e.g. Rent share">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--space-4);">Complete Transfer</button>
             </form>
         </div>
     </div>
 
-    <script src="js/config.js"></script>
-    <script src="js/api.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/pwa.js"></script>
 </body>

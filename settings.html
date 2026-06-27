@@ -11,16 +11,18 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/pages.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/offline.js"></script>
+    <script src="js/state.js"></script>
 </head>
 <body>
     <div class="app-layout">
-        <!-- Sidebar (Desktop) -->
+        <!-- Sidebar -->
         <aside class="app-sidebar hide-on-mobile">
-            <div class="sidebar-header">
-                <h2>RupeeTrail</h2>
-            </div>
+            <div class="sidebar-header"><h2>RupeeTrail</h2></div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-link"><i class='bx bx-home'></i> Home</a>
                 <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
                 <a href="transactions.html" class="nav-link"><i class='bx bx-list-ul'></i> Transactions</a>
                 <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
@@ -32,36 +34,115 @@
         <div class="app-main">
             <!-- Topbar -->
             <header class="app-header">
-                <div class="header-left">
-                    <h1 class="page-title">Settings</h1>
-                </div>
+                <div class="header-left"><h1 class="page-title">Settings</h1></div>
                 <div class="header-right">
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">SR</div>
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
 
-            <!-- Main Content -->
-            <main class="app-content">
-                <!-- No dashboard, charts, or data. Blank page. -->
+            <main class="app-content animate-fade-in">
+                
+                <!-- Appearance Card -->
+                <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+                    <h3 style="margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2);">
+                        <i class='bx bx-palette' style="color: var(--color-primary);"></i> Appearance
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">Theme</label>
+                        <select id="themeSelect" class="form-select">
+                            <option value="system">System Default</option>
+                            <option value="light">Light Mode</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Regional Settings -->
+                <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+                    <h3 style="margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2);">
+                        <i class='bx bx-globe' style="color: var(--color-info);"></i> Regional Settings
+                    </h3>
+                    <div class="form-group">
+                        <label class="form-label">Currency Symbol</label>
+                        <input type="text" id="currencySymbol" class="form-input" value="₹">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Number Format</label>
+                        <select id="numberFormat" class="form-select">
+                            <option value="en-IN">Indian (1,00,000.00)</option>
+                            <option value="en-US">International (100,000.00)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="saveRegionalBtn">Save Settings</button>
+                </div>
+
+                <!-- Security -->
+                <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+                    <h3 style="margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2);">
+                        <i class='bx bx-lock-alt' style="color: var(--color-warning);"></i> Security
+                    </h3>
+                    <button class="btn btn-secondary w-full" style="text-align: left; padding: var(--space-3);" onclick="UI.openSheet('sheetOverlay', 'pinSheet')">
+                        <i class='bx bx-dialpad-alt' style="margin-right: var(--space-2);"></i> Change PIN
+                    </button>
+                    <button class="btn btn-ghost w-full" style="text-align: left; padding: var(--space-3); margin-top: var(--space-2); color: var(--color-danger);" id="logoutBtn">
+                        <i class='bx bx-log-out' style="margin-right: var(--space-2);"></i> Logout
+                    </button>
+                </div>
+
+                <!-- Data Management -->
+                <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4); border: 1px solid rgba(244, 63, 94, 0.3);">
+                    <h3 style="margin: 0 0 var(--space-4) 0; display: flex; align-items: center; gap: var(--space-2); color: var(--color-danger);">
+                        <i class='bx bx-data'></i> Data Management
+                    </h3>
+                    <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-4);">
+                        Warning: This will permanently delete all your accounts, transactions, and settings locally.
+                    </p>
+                    <button class="btn btn-danger w-full" id="clearDataBtn">
+                        Clear All Data
+                    </button>
+                </div>
+
             </main>
 
-            <!-- Bottom Navigation (Mobile) -->
             <nav class="bottom-nav hide-on-desktop">
-                <a href="index.html" class="nav-item"><i class='bx bx-home'></i><span>Home</span></a>
                 <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
                 <a href="transactions.html" class="nav-item"><i class='bx bx-list-ul'></i><span>Txns</span></a>
                 <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
+                <a href="accounts.html" class="nav-item"><i class='bx bx-wallet'></i><span>Accounts</span></a>
                 <a href="settings.html" class="nav-item active"><i class='bx bx-cog'></i><span>Settings</span></a>
             </nav>
-            
-            <!-- FAB -->
-            <button class="fab hide-on-desktop">
-                <i class='bx bx-plus'></i>
-            </button>
         </div>
     </div>
-    <script src="js/ui.js"></script>
-    <script src="js/offline.js"></script>
+
+    <!-- Bottom Sheets Overlay -->
+    <div class="bottom-sheet-overlay" id="sheetOverlay"></div>
+
+    <!-- Change PIN Sheet -->
+    <div class="bottom-sheet" id="pinSheet">
+        <div class="bottom-sheet-header">
+            <h3 style="margin: 0;">Change PIN</h3>
+            <button class="btn btn-ghost" style="padding: 0; font-size: 1.5rem;" onclick="UI.closeSheet()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="bottom-sheet-body">
+            <form id="pinForm">
+                <div class="form-group">
+                    <label class="form-label">Current PIN</label>
+                    <input type="password" id="oldPin" class="form-input" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required style="font-family: monospace; font-size: 1.5rem; letter-spacing: 0.5rem; text-align: center;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New PIN</label>
+                    <input type="password" id="newPin" class="form-input" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required style="font-family: monospace; font-size: 1.5rem; letter-spacing: 0.5rem; text-align: center;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm New PIN</label>
+                    <input type="password" id="confirmPin" class="form-input" maxlength="4" pattern="[0-9]{4}" placeholder="••••" required style="font-family: monospace; font-size: 1.5rem; letter-spacing: 0.5rem; text-align: center;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--space-4);">Update PIN</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/settings.js"></script>
     <script src="js/pwa.js"></script>
 </body>
 </html>

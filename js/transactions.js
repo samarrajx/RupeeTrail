@@ -1,7 +1,16 @@
 // js/transactions.js
 
+document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('rupeetrail_auth_token')) {
+        window.location.href = 'index.html';
+        return;
+    }
+    fetchAndRenderTransactions();
+});
+
 let transactions = [];
 let accounts = [];
+let categories = [];
 let currentFilter = 'all';
 
 // DOM Elements
@@ -21,20 +30,24 @@ const fAmount = document.getElementById('txAmount');
 const fCategory = document.getElementById('txCategory');
 const fAccount = document.getElementById('txAccount');
 const fDate = document.getElementById('txDate');
+const fTags = document.getElementById('txTags');
 const btnExpense = document.getElementById('btnExpense');
 const btnIncome = document.getElementById('btnIncome');
+const btnTransfer = document.getElementById('btnTransfer');
 const sheetTitle = document.getElementById('sheetTitle');
 const deleteTxBtn = document.getElementById('deleteTxBtn');
 const closeSheetBtn = document.getElementById('closeSheetBtn');
 
 async function fetchAndRenderTransactions() {
     try {
-        const [txs, accs] = await Promise.all([
+        const [txs, accs, cats] = await Promise.all([
             State.fetchTransactions(),
-            State.fetchAccounts()
+            State.fetchAccounts(),
+            State.fetchCategories()
         ]);
         transactions = txs;
         accounts = accs;
+        categories = cats;
         
         // Sort newest first
         transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -42,13 +55,32 @@ async function fetchAndRenderTransactions() {
         
         // Populate account dropdown
         if (fAccount) {
-            const opts = accounts.map(a => `<option value="${a.id}">${a.name} (${UI.formatCurrency(a.balance)})</option>`).join('');
+            const opts = accounts.map(a => `<option value="${UI.escapeHtml(a.id)}">${UI.escapeHtml(a.name)} (${UI.formatCurrency(a.balance)})</option>`).join('');
             fAccount.innerHTML = opts || '<option value="" disabled>No accounts available</option>';
         }
+
+        // Populate category dropdown
+        if (fCategory) {
+            const opts = categories.map(c => `<option value="${UI.escapeHtml(c.name)}">${UI.escapeHtml(c.name)}</option>`).join('');
+            fCategory.innerHTML = opts || '<option value="Other">Other</option>';
+        }
+
     } catch (err) {
         console.error("Failed to load transactions", err);
-        transactionsContainer.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please pull to refresh', '<path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />');
+        transactionsContainer.innerHTML = UI.getEmptyStateHTML('Error Loading', 'Please pull to refresh', '<i class="bx bx-error"></i>');
     }
+}
+
+function formatDateHeader(dateStr) {
+    const d = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function renderTransactions() {
@@ -62,33 +94,70 @@ function renderTransactions() {
 
     if (filtered.length === 0) {
         transactionsContainer.innerHTML = '';
-        emptyState.style.display = 'block';
+        emptyState.style.display = 'flex';
         return;
     }
 
     emptyState.style.display = 'none';
     const catIcons = {"Salary":"bx-briefcase", "Food & Dining":"bx-restaurant", "Transportation":"bx-bus", "Utilities":"bx-plug", "Shopping":"bx-shopping-bag"};
 
-    transactionsContainer.innerHTML = filtered.map(tx => {
-        const isIncome = tx.type === 'income';
-        const icon = catIcons[tx.category] || 'bx-receipt';
-        return `
-        <button class="transaction-item w-full text-left" onclick="editTransaction('${tx.id}')" aria-label="Edit ${tx.title}">
-            <div class="transaction-details">
-                <div class="transaction-icon" style="background-color: ${isIncome ? '#D1FAE5' : '#FEE2E2'}; color: ${isIncome ? '#059669' : '#DC2626'}">
-                    <i class='bx ${icon}'></i>
-                </div>
-                <div class="transaction-info">
-                    <p class="transaction-title">${tx.title}</p>
-                    <p class="transaction-date">${tx.date} • ${tx.category}</p>
-                </div>
+    // Group by Date
+    const grouped = {};
+    filtered.forEach(tx => {
+        const dateKey = tx.date;
+        if (!grouped[dateKey]) grouped[dateKey] = [];
+        grouped[dateKey].push(tx);
+    });
+
+    let html = '';
+    for (const [date, txs] of Object.entries(grouped)) {
+        html += `
+            <div style="padding: var(--space-4) 0 var(--space-2) var(--space-2); font-weight: var(--font-weight-bold); color: var(--text-muted); font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.5px;">
+                ${formatDateHeader(date)}
             </div>
-            <div class="transaction-amount ${tx.type}">
-                ${isIncome ? '+' : '-'}${UI.formatCurrency(tx.amount)}
-            </div>
-        </button>
+            <div class="transaction-list">
         `;
-    }).join('');
+        
+        html += txs.map(tx => {
+            const isIncome = tx.type === 'income';
+            const isTransfer = tx.type === 'transfer';
+            const icon = isTransfer ? 'bx-transfer' : (catIcons[tx.category] || 'bx-receipt');
+            
+            let bg, color, sign;
+            if (isTransfer) {
+                bg = 'rgba(59, 130, 246, 0.15)'; color = 'var(--color-info)'; sign = '';
+            } else if (isIncome) {
+                bg = 'rgba(16, 185, 129, 0.15)'; color = 'var(--color-secondary)'; sign = '+';
+            } else {
+                bg = 'rgba(244, 63, 94, 0.15)'; color = 'var(--color-danger)'; sign = '-';
+            }
+
+            return `
+            <div class="transaction-item animate-slide-up" style="opacity: 0" onclick="editTransaction('${tx.id}')">
+                <div class="transaction-details">
+                    <div class="transaction-icon" style="background: ${bg}; color: ${color}">
+                        <i class='bx ${UI.escapeHtml(icon)}'></i>
+                    </div>
+                    <div class="transaction-info">
+                        <p class="transaction-title">${UI.escapeHtml(tx.title)}</p>
+                        <p class="transaction-date">${UI.escapeHtml(tx.category)}</p>
+                    </div>
+                </div>
+                <div class="transaction-amount ${tx.type}" style="color: ${color}">
+                    ${sign}${UI.formatCurrency(tx.amount)}
+                </div>
+            </div>
+            `;
+        }).join('');
+        
+        html += `</div>`;
+    }
+
+    transactionsContainer.innerHTML = html;
+    
+    document.querySelectorAll('#transactionsContainer .transaction-item').forEach((el, i) => {
+        el.style.animationDelay = `${(i % 15) * 50}ms`;
+    });
 }
 
 // Filters & Search
@@ -104,33 +173,31 @@ filterChips.forEach(chip => {
     });
 });
 
-// Bottom Sheet Types
+// Bottom Sheet Logic
 function setTxType(type) {
     fType.value = type;
+    btnExpense.style.background = 'transparent'; btnExpense.style.boxShadow = 'none'; btnExpense.style.color = 'var(--text-secondary)';
+    btnIncome.style.background = 'transparent'; btnIncome.style.boxShadow = 'none'; btnIncome.style.color = 'var(--text-secondary)';
+    btnTransfer.style.background = 'transparent'; btnTransfer.style.boxShadow = 'none'; btnTransfer.style.color = 'var(--text-secondary)';
+    
     if (type === 'expense') {
-        btnExpense.style.background = 'var(--bg-surface)';
-        btnExpense.style.boxShadow = 'var(--shadow-sm)';
-        btnExpense.style.color = 'var(--color-danger)';
-        btnIncome.style.background = 'transparent';
-        btnIncome.style.boxShadow = 'none';
-        btnIncome.style.color = 'var(--text-secondary)';
+        btnExpense.style.background = 'var(--bg-surface)'; btnExpense.style.boxShadow = 'var(--shadow-sm)'; btnExpense.style.color = 'var(--color-danger)';
+    } else if (type === 'income') {
+        btnIncome.style.background = 'var(--bg-surface)'; btnIncome.style.boxShadow = 'var(--shadow-sm)'; btnIncome.style.color = 'var(--color-secondary)';
     } else {
-        btnIncome.style.background = 'var(--bg-surface)';
-        btnIncome.style.boxShadow = 'var(--shadow-sm)';
-        btnIncome.style.color = 'var(--color-secondary)';
-        btnExpense.style.background = 'transparent';
-        btnExpense.style.boxShadow = 'none';
-        btnExpense.style.color = 'var(--text-secondary)';
+        btnTransfer.style.background = 'var(--bg-surface)'; btnTransfer.style.boxShadow = 'var(--shadow-sm)'; btnTransfer.style.color = 'var(--color-info)';
     }
 }
 
-btnExpense.addEventListener('click', (e) => { e.preventDefault(); setTxType('expense'); });
-btnIncome.addEventListener('click', (e) => { e.preventDefault(); setTxType('income'); });
+if(btnExpense) btnExpense.addEventListener('click', (e) => { e.preventDefault(); setTxType('expense'); });
+if(btnIncome) btnIncome.addEventListener('click', (e) => { e.preventDefault(); setTxType('income'); });
+if(btnTransfer) btnTransfer.addEventListener('click', (e) => { e.preventDefault(); setTxType('transfer'); });
 
-closeSheetBtn.addEventListener('click', (e) => { e.preventDefault(); UI.closeSheet(); });
-document.getElementById('sheetOverlay').addEventListener('click', UI.closeSheet);
+if(closeSheetBtn) closeSheetBtn.addEventListener('click', (e) => { e.preventDefault(); UI.closeSheet(); });
+const overlay = document.getElementById('sheetOverlay');
+if(overlay) overlay.addEventListener('click', UI.closeSheet);
 
-fabBtn.addEventListener('click', () => {
+function openAddSheet() {
     sheetTitle.textContent = "Add Transaction";
     fId.value = "";
     txForm.reset();
@@ -138,142 +205,97 @@ fabBtn.addEventListener('click', () => {
     fDate.valueAsDate = new Date(); // Set today
     deleteTxBtn.style.display = 'none';
     UI.openSheet('sheetOverlay', 'bottomSheet');
-});
-
-if (desktopAddBtn) {
-    desktopAddBtn.addEventListener('click', () => fabBtn.click());
 }
 
-// CRUD Operations
+if(fabBtn) fabBtn.addEventListener('click', openAddSheet);
+if(desktopAddBtn) desktopAddBtn.addEventListener('click', openAddSheet);
+
 window.editTransaction = function(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
-
+    
     sheetTitle.textContent = "Edit Transaction";
     fId.value = tx.id;
     fTitle.value = tx.title;
     fAmount.value = tx.amount;
     fCategory.value = tx.category;
-    if (fAccount && tx.accountId) fAccount.value = tx.accountId;
     fDate.value = tx.date;
+    fAccount.value = tx.accountId || "";
+    if (fTags) fTags.value = tx.tags ? tx.tags.join(', ') : "";
+    
     setTxType(tx.type);
     
     deleteTxBtn.style.display = 'block';
     UI.openSheet('sheetOverlay', 'bottomSheet');
-};
+}
 
-deleteTxBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (confirm("Are you sure you want to delete this transaction?")) {
-        const id = fId.value;
-        const btn = deleteTxBtn;
-        btn.disabled = true;
-        btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i>`;
-        
-        try {
-            const txToDelete = transactions.find(t => t.id === id);
-            if (txToDelete) {
-                // Reverse the balance effect
-                const acc = accounts.find(a => a.id === txToDelete.accountId);
-                if (acc) {
-                    if (txToDelete.type === 'expense') acc.balance += txToDelete.amount;
-                    if (txToDelete.type === 'income') acc.balance -= txToDelete.amount;
-                    await State.updateAccount(acc.id, acc);
-                }
-            }
-
-            await State.deleteTransaction(id);
-            transactions = transactions.filter(t => t.id !== id);
-            UI.closeSheet();
-            renderTransactions();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Delete";
-        }
-    }
-});
-
+// Form Submit
 txForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const newTx = {
-        title: fTitle.value,
-        amount: parseFloat(fAmount.value),
-        type: fType.value,
-        category: fCategory.value,
-        date: fDate.value,
-        accountId: fAccount ? fAccount.value : null
-    };
-
-    if (!newTx.accountId && accounts.length > 0) {
-        newTx.accountId = accounts[0].id;
+    const id = fId.value;
+    const amount = parseFloat(fAmount.value);
+    
+    if (!amount || amount <= 0) {
+        UI.showToast("Please enter a valid amount", "error");
+        return;
     }
-
-    const btn = e.submitter;
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> Saving...`;
+    if (!fTitle.value.trim() || !fCategory.value || !fAccount.value || !fDate.value) {
+        UI.showToast("Please fill all required fields", "error");
+        return;
+    }
+    
+    const submitBtn = txForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
 
     try {
-        if (fId.value) {
-            const oldTx = transactions.find(t => t.id === fId.value);
-            if (oldTx) {
-                // Reverse old transaction from old account
-                const oldAcc = accounts.find(a => a.id === oldTx.accountId);
-                if (oldAcc) {
-                    if (oldTx.type === 'expense') oldAcc.balance += oldTx.amount;
-                    if (oldTx.type === 'income') oldAcc.balance -= oldTx.amount;
-                    await State.updateAccount(oldAcc.id, oldAcc);
-                }
-            }
-            
-            // Apply new transaction to new account
-            const newAcc = accounts.find(a => a.id === newTx.accountId);
-            if (newAcc) {
-                if (newTx.type === 'expense') newAcc.balance -= newTx.amount;
-                if (newTx.type === 'income') newAcc.balance += newTx.amount;
-                await State.updateAccount(newAcc.id, newAcc);
-            }
-
-            const updatedTx = await State.updateTransaction(fId.value, newTx);
-            const index = transactions.findIndex(t => t.id === fId.value);
-            if (index !== -1) transactions[index] = updatedTx;
-        } else {
-            // Apply new transaction to account
-            const newAcc = accounts.find(a => a.id === newTx.accountId);
-            if (newAcc) {
-                if (newTx.type === 'expense') newAcc.balance -= newTx.amount;
-                if (newTx.type === 'income') newAcc.balance += newTx.amount;
-                await State.updateAccount(newAcc.id, newAcc);
-            }
-
-            const createdTx = await State.addTransaction(newTx);
-            transactions.unshift(createdTx); // add to top
-        }
-        UI.closeSheet();
+        const txData = {
+            title: fTitle.value.trim(),
+            amount: amount,
+            type: fType.value,
+            category: fCategory.value,
+            accountId: fAccount.value,
+            date: fDate.value,
+            tags: fTags ? fTags.value.split(',').map(t => t.trim()).filter(t => t) : []
+        };
         
-        // Repopulate options with new balances
-        if (fAccount) {
-            const opts = accounts.map(a => `<option value="${a.id}">${a.name} (${UI.formatCurrency(a.balance)})</option>`).join('');
-            fAccount.innerHTML = opts || '<option value="" disabled>No accounts available</option>';
+        if (id) {
+            await State.updateTransaction(id, txData);
+        } else {
+            txData.id = 'tx_' + Date.now(); // local temp id
+            await State.addTransaction(txData);
         }
-
-        renderTransactions();
+        
+        UI.closeSheet();
+        await fetchAndRenderTransactions();
     } catch (err) {
         console.error(err);
+        UI.showToast("Action failed", "error");
     } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 });
 
-// Auto Format Currency
-fAmount.addEventListener('input', (e) => {
-    // Only allow numbers and one decimal
-    e.target.value = e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+// Delete Transaction
+deleteTxBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const id = fId.value;
+    if (!id) return;
+    
+    if (!confirm("Are you sure you want to delete this transaction?")) return;
+    
+    deleteTxBtn.disabled = true;
+    try {
+        await State.deleteTransaction(id);
+        UI.closeSheet();
+        await fetchAndRenderTransactions();
+    } catch(err) {
+        console.error(err);
+        UI.showToast("Failed to delete", "error");
+    } finally {
+        deleteTxBtn.disabled = false;
+    }
 });
-
-// Initialize
-document.addEventListener('DOMContentLoaded', fetchAndRenderTransactions);
