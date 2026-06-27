@@ -195,7 +195,10 @@ function renderReport(timeframe) {
                 plugins: {
                     tooltip: {
                         enabled: true,
-                        position: 'nearest'
+                        position: 'nearest',
+                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim(),
+                        titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()
                     },
                     legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter' } } }
                 }
@@ -207,7 +210,7 @@ function renderReport(timeframe) {
             type: 'doughnut',
             data: {
                 labels: ['No Data'],
-                datasets: [{ data: [1], backgroundColor: ['#E2E8F0'], borderWidth: 0 }]
+                datasets: [{ data: [1], backgroundColor: [getComputedStyle(document.documentElement).getPropertyValue('--border-light').trim()], borderWidth: 0 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false, cutout: '70%',
@@ -252,6 +255,9 @@ function renderReport(timeframe) {
                 tooltip: {
                     enabled: true,
                     position: 'nearest',
+                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim(),
+                    titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                    bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
                     callbacks: { label: (ctx) => ' ' + UI.formatCurrency(ctx.raw) }
                 }
             },
@@ -259,9 +265,10 @@ function renderReport(timeframe) {
                 x: { grid: { display: false } },
                 y: { 
                     border: { display: false },
-                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border-light').trim() },
                     beginAtZero: true,
                     ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim(),
                         callback: function(value) {
                             if (value >= 1000) return '₹' + (value/1000).toFixed(0) + 'k';
                             return '₹' + value;

@@ -3,8 +3,35 @@
 window.ChartsManager = (() => {
   // Global defaults for Chart.js
   Chart.defaults.font.family = "'Inter', sans-serif";
-  Chart.defaults.color = 'var(--text-secondary)';
-  Chart.defaults.scale.grid.color = 'var(--border-light)';
+  
+  function updateChartDefaults() {
+    const style = getComputedStyle(document.documentElement);
+    Chart.defaults.color = style.getPropertyValue('--text-secondary').trim();
+    Chart.defaults.scale.grid.color = style.getPropertyValue('--border-light').trim();
+    
+    // Force re-render all existing charts
+    for (const key in registry) {
+      if (registry[key]) {
+        registry[key].update();
+      }
+    }
+    
+    // Also notify charts manually drawn outside this registry if possible, 
+    // or rely on page refresh / re-render logic in those pages.
+  }
+
+  // Initialize colors
+  updateChartDefaults();
+
+  // Watch for theme changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+        updateChartDefaults();
+      }
+    });
+  });
+  observer.observe(document.documentElement, { attributes: true });
   
   // A registry to safely destroy charts before re-rendering
   const registry = {};

@@ -190,7 +190,9 @@ async function fetchAndRenderDashboard() {
                     tooltip: {
                         enabled: true,
                         position: 'nearest',
-                        backgroundColor: '#1E293B',
+                        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim(),
+                        titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+                        bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
                         titleFont: { family: 'Outfit', size: 14 },
                         bodyFont: { family: 'Inter', size: 14 },
                         callbacks: {
@@ -205,7 +207,7 @@ async function fetchAndRenderDashboard() {
                         grid: { display: false, drawBorder: false },
                         ticks: {
                             font: { family: 'Inter', size: 10 },
-                            color: '#94A3B8',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim(),
                             maxTicksLimit: 15
                         }
                     },

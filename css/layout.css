@@ -54,8 +54,9 @@ html {
 .app-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
-  overflow: hidden;
+  overflow: visible;
   background-color: transparent;
 }
 
@@ -64,7 +65,8 @@ html {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  overflow-y: hidden;
   min-width: 320px;
 }
 
@@ -176,10 +178,11 @@ html {
 
 /* Bottom Navigation (Mobile Only) */
 .bottom-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
   height: 70px;
   background-color: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -246,7 +249,7 @@ html {
 
 /* FAB (Mobile Only) */
 .fab {
-  position: absolute;
+  position: fixed;
   bottom: 90px;
   right: var(--space-4);
   width: 56px;
@@ -283,6 +286,7 @@ html {
   
   .hide-on-mobile { display: flex !important; }
   .hide-on-desktop { display: none !important; }
+  .bottom-nav { display: none !important; }
   
   .app-content {
     padding: var(--space-8);

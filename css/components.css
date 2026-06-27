@@ -19,7 +19,7 @@
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: var(--radius-lg);
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
 }
 
 .card:hover {
@@ -138,6 +138,7 @@
 .form-input,
 .form-select,
 .form-textarea {
+  color-scheme: light dark;
   width: 100%;
   padding: var(--space-3) var(--space-4);
   font-size: var(--font-size-base);
@@ -176,10 +177,10 @@
   letter-spacing: 0.05em;
 }
 
-.badge-success { background: rgba(16, 185, 129, 0.15); color: #047857; }
-.badge-warning { background: rgba(245, 158, 11, 0.15); color: #B45309; }
-.badge-danger { background: rgba(244, 63, 94, 0.15); color: #BE123C; }
-.badge-info { background: rgba(59, 130, 246, 0.15); color: #1D4ED8; }
+.badge-success { background: rgba(16, 185, 129, 0.15); color: var(--color-secondary); }
+.badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
+.badge-danger { background: rgba(244, 63, 94, 0.15); color: var(--color-danger); }
+.badge-info { background: rgba(59, 130, 246, 0.15); color: var(--color-info); }
 
 /* Animations */
 @keyframes fadeIn {
