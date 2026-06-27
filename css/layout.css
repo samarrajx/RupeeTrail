@@ -66,7 +66,6 @@ html {
   flex-direction: column;
   position: relative;
   overflow: visible;
-  overflow-y: hidden;
   min-width: 320px;
 }
 

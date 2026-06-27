@@ -65,17 +65,17 @@ function renderAccounts(accs) {
     }
 
     accountsGrid.innerHTML = accs.map((acc, index) => {
-        total += acc.balance;
+        total += Number(acc.balance) || 0;
         const icon    = UI.escapeHtml(acc.icon) || 'bx-wallet';
         const typeStr = UI.escapeHtml(acc.type) || 'Checking';
         const safeName = UI.escapeHtml(acc.name);
         return `
-        <button class="account-card ${UI.escapeHtml(acc.theme) || 'primary'} animate-slide-up text-left" style="position: relative; min-height: 150px; cursor: pointer; border: none; padding: var(--space-4); display: flex; flex-direction: column; opacity: 0; animation-delay: ${index * 50}ms;" onclick="openAccountSheet('${UI.escapeHtml(acc.id)}')" aria-label="Edit ${safeName}">
+        <button class="account-card ${UI.escapeHtml(acc.theme) || 'primary'} animate-slide-up text-left" style="position: relative; min-height: 150px; cursor: pointer; border: none; padding: var(--space-4); display: flex; flex-direction: column; animation-delay: ${index * 50}ms;" onclick="openAccountSheet('${UI.escapeHtml(acc.id)}')" aria-label="Edit ${safeName}">
             <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2);">
                 <i class='bx ${icon}' style="font-size: 1.5rem; opacity: 0.9;"></i>
                 <div class="account-name" style="margin: 0; font-size: 1.1rem;">${safeName}</div>
             </div>
-            <div class="account-balance" style="font-size: 1.8rem;">${UI.formatCurrency(acc.balance)}</div>
+            <div class="account-balance" style="font-size: 1.8rem;">${UI.formatCurrency(Number(acc.balance) || 0)}</div>
             <div style="font-size: 0.85rem; opacity: 0.8; margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
                 <span>${typeStr}</span>
                 <span>**** ${String(acc.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 1234567).slice(-4).padStart(4, '0')}</span>

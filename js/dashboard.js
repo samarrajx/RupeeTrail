@@ -89,25 +89,25 @@ async function renderDashboardData(accounts, transactions) {
         
         // Render Summary (4 Top Stats)
         const summaryHtml = `
-            <div class="card stat-card stagger-1 animate-slide-up" style="opacity:0">
+            <div class="card stat-card stagger-1 animate-slide-up">
                 <div class="stat-title">Total Balance</div>
                 <div class="stat-value">${UI.formatCurrency(totalBalance)}</div>
             </div>
-            <div class="card stat-card stagger-2 animate-slide-up" style="opacity:0">
+            <div class="card stat-card stagger-2 animate-slide-up">
                 <div class="stat-title">Month In / Out</div>
                 <div class="stat-value" style="font-size: var(--font-size-lg); padding-top:4px;">
                     <span style="color: var(--color-secondary);">${UI.formatCurrency(income)}</span> / 
                     <span style="color: var(--color-danger);">${UI.formatCurrency(expense)}</span>
                 </div>
             </div>
-            <div class="card stat-card stagger-3 animate-slide-up" style="opacity:0">
+            <div class="card stat-card stagger-3 animate-slide-up">
                 <div class="stat-title">Monthly Savings</div>
                 <div class="stat-value">${UI.formatCurrency(savings)}</div>
                 <div class="stat-trend ${savingsTrendClass}">
                     <i class='bx ${savingsIcon}'></i> ${savings >= 0 ? '+' : ''}${((savings / (income || 1)) * 100).toFixed(0)}% saved
                 </div>
             </div>
-            <div class="card stat-card stagger-4 animate-slide-up" style="opacity:0">
+            <div class="card stat-card stagger-4 animate-slide-up">
                 <div class="stat-title">Today's Spending</div>
                 <div class="stat-value">${UI.formatCurrency(todaySpending)}</div>
             </div>
@@ -157,7 +157,7 @@ async function renderDashboardData(accounts, transactions) {
             document.getElementById('transactionsContainer').innerHTML = transactions.slice(0, 3).map(tx => {
                 const icon = catIcons[tx.category] || 'bx-receipt';
                 return `
-                <div class="transaction-item animate-slide-right" style="opacity: 0">
+                <div class="transaction-item animate-slide-right">
                     <div class="transaction-details">
                         <div class="transaction-icon" style="background: ${tx.type === 'income' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)'}; color: ${tx.type === 'income' ? 'var(--color-secondary)' : 'var(--color-danger)'}">
                             <i class='bx ${UI.escapeHtml(icon)}'></i>

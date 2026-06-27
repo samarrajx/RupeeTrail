@@ -179,7 +179,7 @@ function renderTransactions() {
             }
 
             return `
-            <button type="button" class="transaction-item animate-slide-up w-full text-left" style="opacity: 0" onclick="editTransaction('${tx.id}')">
+            <button type="button" class="transaction-item animate-slide-up w-full text-left" onclick="editTransaction('${tx.id}')">
                 <div class="transaction-details">
                     <div class="transaction-icon" style="background: ${bg}; color: ${color}">
                         <i class='bx ${UI.escapeHtml(icon)}'></i>
