@@ -146,7 +146,7 @@ window.deleteAccount = async function() {
         msg = "WARNING: This account has linked transactions. Deleting it may orphan them. Are you REALLY sure?";
     }
 
-    if (confirm(msg)) {
+    UI.showConfirm("Delete Account", msg, async () => {
         const btn = deleteAccBtn;
         btn.disabled = true;
         btn.textContent = "Deleting...";
@@ -161,7 +161,7 @@ window.deleteAccount = async function() {
             btn.disabled = false;
             btn.textContent = "Delete";
         }
-    }
+    });
 };
 
 // Transfer Logic
@@ -198,61 +198,68 @@ transferForm.addEventListener('submit', async (e) => {
     const fromAcc = accounts.find(a => a.id === fromId);
     const toAcc = accounts.find(a => a.id === toId);
 
-    if (fromAcc.balance < amount) {
-        if(!confirm(`The from account doesn't have enough balance. Proceed anyway?`)) {
-            return;
+    const executeTransfer = async () => {
+        const btn = document.querySelector('#transferForm button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = `Transferring...`;
         }
-    }
 
-    const btn = e.submitter;
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.textContent = `Transferring...`;
+        try {
+            // Update both accounts
+            fromAcc.balance -= amount;
+            toAcc.balance += amount;
 
-    try {
-        // Update both accounts
-        fromAcc.balance -= amount;
-        toAcc.balance += amount;
+            await State.updateAccount(fromId, fromAcc);
+            await State.updateAccount(toId, toAcc);
 
-        await State.updateAccount(fromId, fromAcc);
-        await State.updateAccount(toId, toAcc);
+            const dateStr = new Date().toISOString().split('T')[0];
+            const baseNote = note ? ` - ${note}` : '';
 
-        const dateStr = new Date().toISOString().split('T')[0];
-        const baseNote = note ? ` - ${note}` : '';
-
-        // Debit Transaction
-        await State.addTransaction({
-            id: 'tx_out_' + Date.now(),
-            date: dateStr,
-            accountId: fromId,
-            category: "Transfer",
-            amount: amount,
-            type: "transfer",
-            title: `Transfer to ${toAcc.name}${baseNote}`
-        });
-
-        // Credit Transaction (small delay to ensure unique ID)
-        setTimeout(async () => {
+            // Debit Transaction
             await State.addTransaction({
-                id: 'tx_in_' + Date.now(),
+                id: 'tx_out_' + Date.now(),
                 date: dateStr,
-                accountId: toId,
+                accountId: fromId,
                 category: "Transfer",
                 amount: amount,
-                type: "transfer", // Using transfer type for both, since transactions.js shows transfer as blue. Income/Expense would color it. But in a full app we might want to color the 'in' as green. We'll leave it as transfer.
-                title: `Transfer from ${fromAcc.name}${baseNote}`
+                type: "transfer",
+                title: `Transfer to ${toAcc.name}${baseNote}`
             });
-        }, 50);
 
-        UI.closeSheet();
-        await fetchAndRenderAccounts();
-    } catch (err) {
-        console.error(err);
-        UI.showToast("Transfer failed", "error");
-    } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+            // Credit Transaction (small delay to ensure unique ID)
+            setTimeout(async () => {
+                await State.addTransaction({
+                    id: 'tx_in_' + Date.now(),
+                    date: dateStr,
+                    accountId: toId,
+                    category: "Transfer",
+                    amount: amount,
+                    type: "transfer",
+                    title: `Transfer from ${fromAcc.name}${baseNote}`
+                });
+            }, 50);
+
+            UI.closeSheet();
+            UI.showToast("Transfer complete", "success");
+            await fetchAndRenderAccounts();
+        } catch (err) {
+            console.error(err);
+            UI.showToast("Transfer failed", "error");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "Transfer";
+            }
+        }
+    };
+
+    if (fromAcc.balance < amount) {
+        UI.showConfirm("Insufficient Balance", "The from account doesn't have enough balance. Proceed anyway?", executeTransfer);
+        return;
     }
+
+    executeTransfer();
 });
 
 const formatCurrencyInput = (e) => {

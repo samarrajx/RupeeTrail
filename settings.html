@@ -35,7 +35,8 @@
             <!-- Topbar -->
             <header class="app-header">
                 <div class="header-left"><h1 class="page-title">Settings</h1></div>
-                <div class="header-right">
+                <div class="header-right" style="display: flex; gap: 15px; align-items: center;">
+                    <i class='bx bx-log-out hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.logout()"></i>
                     <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
@@ -97,9 +98,14 @@
                     <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: var(--space-4);">
                         Warning: This will permanently delete all your accounts, transactions, and settings locally.
                     </p>
-                    <button class="btn btn-danger w-full" id="clearDataBtn">
-                        Clear All Data
-                    </button>
+                    <div style="margin-top: var(--space-6);">
+                        <button class="btn btn-outline w-full" id="logoutBtn" style="margin-bottom: var(--space-4);" onclick="UI.logout()">
+                            <i class='bx bx-log-out'></i> Logout
+                        </button>
+                        <button class="btn btn-danger w-full" id="clearDataBtn">
+                            <i class='bx bx-trash'></i> Clear All Data
+                        </button>
+                    </div>
                 </div>
 
             </main>

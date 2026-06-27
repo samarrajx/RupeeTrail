@@ -119,7 +119,6 @@ window.State = (() => {
     try {
       const res = await window.api.addTransaction(tx);
       clearCache(); // Invalidate cache
-      window.UI.showToast("Transaction saved", "success");
       return res.data || res;
     } catch (e) {
       window.UI.showToast("Error saving transaction", "error");
@@ -135,7 +134,6 @@ window.State = (() => {
     try {
       const res = await window.api.updateTransaction(id, tx);
       clearCache();
-      window.UI.showToast("Transaction updated", "success");
       return res.data || res;
     } catch (e) {
       window.UI.showToast("Error updating transaction", "error");
@@ -151,7 +149,6 @@ window.State = (() => {
     try {
       await window.api.deleteTransaction(id);
       clearCache();
-      window.UI.showToast("Transaction deleted", "success");
     } catch (e) {
       window.UI.showToast("Error deleting transaction", "error");
       throw e;
@@ -166,7 +163,6 @@ window.State = (() => {
     try {
       const res = await window.api.addAccount(acc);
       clearCache();
-      window.UI.showToast("Account saved", "success");
       return res.data || res;
     } catch (e) {
       window.UI.showToast("Error saving account", "error");
@@ -182,7 +178,6 @@ window.State = (() => {
     try {
       const res = await window.api.updateAccount(id, acc);
       clearCache();
-      window.UI.showToast("Account updated", "success");
       return res.data || res;
     } catch (e) {
       window.UI.showToast("Error updating account", "error");
@@ -198,7 +193,6 @@ window.State = (() => {
     try {
       await window.api.deleteAccount(id);
       clearCache();
-      window.UI.showToast("Account deleted", "success");
     } catch (e) {
       window.UI.showToast("Error deleting account", "error");
       throw e;

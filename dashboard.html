@@ -45,7 +45,8 @@
                 <div class="header-left">
                     <h1 class="page-title">Dashboard</h1>
                 </div>
-                <div class="header-right">
+                <div class="header-right" style="display: flex; gap: 15px; align-items: center;">
+                    <i class='bx bx-log-out hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.logout()"></i>
                     <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
@@ -113,6 +114,7 @@
                 <a href="transactions.html" class="nav-item"><i class='bx bx-list-ul'></i><span>Txns</span></a>
                 <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
                 <a href="accounts.html" class="nav-item"><i class='bx bx-wallet'></i><span>Accounts</span></a>
+                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
             </nav>
             
             <!-- FAB -->

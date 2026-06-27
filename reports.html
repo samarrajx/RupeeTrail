@@ -36,7 +36,8 @@
         <div class="app-main">
             <header class="app-header">
                 <div class="header-left"><h1 class="page-title">Reports</h1></div>
-                <div class="header-right">
+                <div class="header-right" style="display: flex; gap: 15px; align-items: center;">
+                    <i class='bx bx-log-out hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.logout()"></i>
                     <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
                 </div>
             </header>
@@ -45,11 +46,14 @@
                 <!-- Filters -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
                     <h2 style="margin:0; font-size: var(--font-size-lg);">Overview</h2>
-                    <select class="form-select" style="width: auto; padding-top: 0.25rem; padding-bottom: 0.25rem;" id="timeframeFilter">
-                        <option value="thisMonth">This Month</option>
-                        <option value="lastMonth">Last Month</option>
+                    <div style="display: flex; gap: var(--space-2); align-items: center;">
+                        <button id="exportBtn" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-sm);"><i class='bx bx-download'></i> Export PDF</button>
+                        <select class="form-select" style="width: auto; padding-top: 0.25rem; padding-bottom: 0.25rem;" id="timeframeFilter">
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
                         <option value="ytd">Year to Date</option>
-                    </select>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Statistics -->
@@ -109,6 +113,7 @@
                 <a href="transactions.html" class="nav-item"><i class='bx bx-list-ul'></i><span>Txns</span></a>
                 <a href="reports.html" class="nav-item active"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
                 <a href="accounts.html" class="nav-item"><i class='bx bx-wallet'></i><span>Accounts</span></a>
+                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
             </nav>
         </div>
     </div>

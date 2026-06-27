@@ -285,17 +285,17 @@ deleteTxBtn.addEventListener('click', async (e) => {
     const id = fId.value;
     if (!id) return;
     
-    if (!confirm("Are you sure you want to delete this transaction?")) return;
-    
-    deleteTxBtn.disabled = true;
-    try {
-        await State.deleteTransaction(id);
-        UI.closeSheet();
-        await fetchAndRenderTransactions();
-    } catch(err) {
-        console.error(err);
-        UI.showToast("Failed to delete", "error");
-    } finally {
-        deleteTxBtn.disabled = false;
-    }
+    UI.showConfirm("Delete Transaction", "Are you sure you want to delete this transaction?", async () => {
+        deleteTxBtn.disabled = true;
+        try {
+            await State.deleteTransaction(id);
+            UI.closeSheet();
+            await fetchAndRenderTransactions();
+        } catch(err) {
+            console.error(err);
+            UI.showToast("Failed to delete", "error");
+        } finally {
+            deleteTxBtn.disabled = false;
+        }
+    });
 });

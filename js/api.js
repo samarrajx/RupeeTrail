@@ -56,6 +56,10 @@ class ApiClient {
             
             // Standardize error handling from backend
             if (data && data.status === 'error') {
+                if (data.message && (data.message.includes('Unauthorized') || data.message.includes('Invalid token'))) {
+                    localStorage.removeItem('rupeetrail_auth_token');
+                    window.location.href = 'index.html';
+                }
                 throw new Error(data.message || 'API Error');
             }
             

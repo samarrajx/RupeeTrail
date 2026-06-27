@@ -143,6 +143,16 @@ window.UI = (() => {
          .replace(/'/g, "&#039;");
   }
 
+  async function logout() {
+    try {
+        if (window.api && window.api.logout) await window.api.logout();
+    } catch (e) {
+        console.error("Logout API failed, continuing local logout", e);
+    }
+    localStorage.removeItem('rupeetrail_auth_token');
+    window.location.href = 'index.html';
+  }
+
   return {
     showToast,
     openSheet,
@@ -150,6 +160,7 @@ window.UI = (() => {
     getEmptyStateHTML,
     debounce,
     formatCurrency,
-    escapeHtml
+    escapeHtml,
+    logout
   };
 })();

@@ -123,18 +123,21 @@ async function handleLogout() {
 }
 
 function handleClearData() {
-    if (confirm("Are you absolutely sure you want to clear ALL data? This action cannot be undone.")) {
-        // Clear all LocalStorage
-        localStorage.clear();
-        
-        // Notify Service Worker to clear caches if needed
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                for (let name of names) caches.delete(name);
-            });
+    UI.showConfirm(
+        "Clear All Data", 
+        "Are you absolutely sure you want to clear ALL data? This action cannot be undone.",
+        () => {
+            // Clear all LocalStorage
+            localStorage.clear();
+            
+            // Notify Service Worker to clear caches if needed
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+            
+            window.location.href = 'index.html';
         }
-        
-        alert("All data cleared. You will be redirected to the login screen.");
-        window.location.href = 'index.html';
-    }
+    );
 }
