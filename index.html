@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+      (function() {
+        try {
+          var s = localStorage.getItem('rupeetrail_settings');
+          if (s) {
+            var theme = JSON.parse(s).theme;
+            if (theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+            else if (theme === 'light') document.documentElement.setAttribute('data-theme','light');
+          }
+        } catch(e) {}
+      })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - RupeeTrail</title>

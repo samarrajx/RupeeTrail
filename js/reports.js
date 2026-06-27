@@ -186,8 +186,17 @@ function renderReport(timeframe) {
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '70%',
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
                 animation: { duration: 1000, easing: 'easeOutQuart' },
                 plugins: {
+                    tooltip: {
+                        enabled: true,
+                        position: 'nearest'
+                    },
                     legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter' } } }
                 }
             }
@@ -202,7 +211,12 @@ function renderReport(timeframe) {
             },
             options: {
                 responsive: true, maintainAspectRatio: false, cutout: '70%',
-                plugins: { tooltip: { enabled: false }, legend: { display: false } }
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                plugins: { tooltip: { enabled: false, position: 'nearest' }, legend: { display: false } }
             }
         });
     }
@@ -227,10 +241,17 @@ function renderReport(timeframe) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            },
             animation: { duration: 1000, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    enabled: true,
+                    position: 'nearest',
                     callbacks: { label: (ctx) => ' ' + UI.formatCurrency(ctx.raw) }
                 }
             },

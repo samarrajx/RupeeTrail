@@ -180,9 +180,16 @@ async function fetchAndRenderDashboard() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        enabled: true,
+                        position: 'nearest',
                         backgroundColor: '#1E293B',
                         titleFont: { family: 'Outfit', size: 14 },
                         bodyFont: { family: 'Inter', size: 14 },

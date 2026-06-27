@@ -61,7 +61,7 @@ function applyTheme(theme) {
     // If 'system', we remove attribute and let prefers-color-scheme handle it
 }
 
-function saveRegionalSettings() {
+function saveRegionalSettings(e) {
     const sym = document.getElementById('currencySymbol').value.trim();
     const fmt = document.getElementById('numberFormat').value;
     
@@ -72,6 +72,18 @@ function saveRegionalSettings() {
     
     saveSettings({ currencySymbol: sym, numberFormat: fmt });
     UI.showToast("Regional settings saved", "success");
+    
+    const btn = e ? e.target : document.getElementById('saveRegionalBtn');
+    if (btn) {
+        const originalText = btn.textContent;
+        const originalColor = btn.style.color;
+        btn.textContent = "✓ Saved";
+        btn.style.color = "var(--color-secondary)";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.color = originalColor;
+        }, 1500);
+    }
 }
 
 async function handlePinChange(e) {
@@ -94,13 +106,21 @@ async function handlePinChange(e) {
         const hashedOld = await window.hashPin(oldPin);
         const hashedNew = await window.hashPin(newPin);
         await window.api.changePin(hashedOld, hashedNew);
-        UI.closeSheet();
-        document.getElementById('pinForm').reset();
         UI.showToast("PIN updated successfully", "success");
+        
+        const originalColor = btn.style.color;
+        btn.textContent = "✓ Saved";
+        btn.style.color = "var(--color-secondary)";
+        setTimeout(() => {
+            UI.closeSheet();
+            document.getElementById('pinForm').reset();
+            btn.disabled = false;
+            btn.textContent = originalText;
+            btn.style.color = originalColor;
+        }, 1500);
     } catch (err) {
         console.error(err);
         UI.showToast(err.message || "Failed to update PIN", "error");
-    } finally {
         btn.disabled = false;
         btn.textContent = originalText;
     }

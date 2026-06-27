@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+      (function() {
+        try {
+          var s = localStorage.getItem('rupeetrail_settings');
+          if (s) {
+            var theme = JSON.parse(s).theme;
+            if (theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+            else if (theme === 'light') document.documentElement.setAttribute('data-theme','light');
+          }
+        } catch(e) {}
+      })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Transactions - RupeeTrail</title>
@@ -25,11 +37,11 @@
                 <h2>RupeeTrail</h2>
             </div>
             <nav class="sidebar-nav">
-                <a href="dashboard.html" class="nav-link"><i class='bx bx-grid-alt'></i> Dashboard</a>
-                <a href="transactions.html" class="nav-link active"><i class='bx bx-list-ul'></i> Transactions</a>
-                <a href="reports.html" class="nav-link"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
-                <a href="accounts.html" class="nav-link"><i class='bx bx-wallet'></i> Accounts</a>
-                <a href="settings.html" class="nav-link"><i class='bx bx-cog'></i> Settings</a>
+                <a href="dashboard.html" class="nav-link" onclick="event.preventDefault(); UI.navigateTo('dashboard.html')"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="transactions.html" class="nav-link active" onclick="event.preventDefault(); UI.navigateTo('transactions.html')"><i class='bx bx-list-ul'></i> Transactions</a>
+                <a href="reports.html" class="nav-link" onclick="event.preventDefault(); UI.navigateTo('reports.html')"><i class='bx bx-pie-chart-alt-2'></i> Reports</a>
+                <a href="accounts.html" class="nav-link" onclick="event.preventDefault(); UI.navigateTo('accounts.html')"><i class='bx bx-wallet'></i> Accounts</a>
+                <a href="settings.html" class="nav-link" onclick="event.preventDefault(); UI.navigateTo('settings.html')"><i class='bx bx-cog'></i> Settings</a>
             </nav>
         </aside>
 
@@ -41,7 +53,13 @@
                 </div>
                 <div class="header-right" style="display: flex; gap: 15px; align-items: center;">
                     <i class='bx bx-log-out hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.logout()"></i>
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--gradient-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);">SR</div>
+                    <div class="user-popover-container">
+                        <i class='bx bx-user-circle user-popover-btn' onclick="UI.toggleUserDropdown(event)"></i>
+                        <div class="user-popover" id="userPopover">
+                            <a href="settings.html" class="user-popover-item"><i class='bx bx-cog'></i> Settings</a>
+                            <div class="user-popover-item" onclick="UI.logout()"><i class='bx bx-log-out'></i> Logout</div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -66,24 +84,64 @@
 
                 <!-- Transactions List Container -->
                 <div id="transactionsContainer">
-                    <!-- Rendered dynamically -->
+                    <div class="transaction-item">
+                        <div class="transaction-details" style="flex: 1;">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="transaction-info" style="width: 100%;">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short" style="margin-bottom: 0;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 60px; margin-bottom: 0;"></div>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details" style="flex: 1;">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="transaction-info" style="width: 100%;">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short" style="margin-bottom: 0;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 60px; margin-bottom: 0;"></div>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details" style="flex: 1;">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="transaction-info" style="width: 100%;">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short" style="margin-bottom: 0;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 60px; margin-bottom: 0;"></div>
+                    </div>
+                    <div class="transaction-item">
+                        <div class="transaction-details" style="flex: 1;">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="transaction-info" style="width: 100%;">
+                                <div class="skeleton skeleton-text"></div>
+                                <div class="skeleton skeleton-text short" style="margin-bottom: 0;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-text" style="width: 60px; margin-bottom: 0;"></div>
+                    </div>
                 </div>
                 
                 <!-- Empty State -->
                 <div id="emptyState" class="empty-state" style="display: none;">
                     <i class='bx bx-receipt'></i>
-                    <p>No transactions found.</p>
+                    <p id="emptyStateMsg">No transactions found.</p>
+                    <button id="emptyStateBtn" class="btn btn-primary" style="margin-top: var(--space-4);" onclick="openAddSheet()">Add your first transaction</button>
                 </div>
 
             </main>
 
             <!-- Bottom Navigation (Mobile) -->
             <nav class="bottom-nav hide-on-desktop">
-                <a href="dashboard.html" class="nav-item"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
-                <a href="transactions.html" class="nav-item active"><i class='bx bx-list-ul'></i><span>Txns</span></a>
-                <a href="reports.html" class="nav-item"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
-                <a href="accounts.html" class="nav-item"><i class='bx bx-wallet'></i><span>Accounts</span></a>
-                <a href="settings.html" class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></a>
+                <a href="dashboard.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('dashboard.html')"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
+                <a href="transactions.html" class="nav-item active" onclick="event.preventDefault(); UI.navigateTo('transactions.html')"><i class='bx bx-list-ul'></i><span>Txns</span></a>
+                <a href="reports.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('reports.html')"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
+                <a href="accounts.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('accounts.html')"><i class='bx bx-wallet'></i><span>Accounts</span></a>
+                <a href="settings.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('settings.html')"><i class='bx bx-cog'></i><span>Settings</span></a>
             </nav>
             
             <!-- FAB overrides default to open Bottom Sheet -->
@@ -102,6 +160,7 @@
     <div class="bottom-sheet-overlay" id="sheetOverlay"></div>
     
     <div class="bottom-sheet" id="bottomSheet">
+        <div style="width:40px; height:4px; border-radius:2px; background:var(--border-light); margin: 12px auto 0;"></div>
         <div class="bottom-sheet-header">
             <h3 id="sheetTitle" style="margin: 0; font-size: var(--font-size-lg);">Add Transaction</h3>
             <button id="closeSheetBtn" class="btn btn-ghost" style="padding: 0.25rem; font-size: 1.5rem; border-radius: var(--radius-full);"><i class='bx bx-x'></i></button>
@@ -120,8 +179,11 @@
 
                 <!-- Amount -->
                 <div class="form-group">
-                    <label class="form-label">Amount (₹)</label>
-                    <input type="number" id="txAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold; font-family: var(--font-family-heading);">
+                    <label class="form-label">Amount</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-secondary); font-size:var(--font-size-xl); font-weight:600; pointer-events:none;"><script>document.write((JSON.parse(localStorage.getItem('rupeetrail_settings')||'{}')).currency || '₹')</script></span>
+                        <input type="number" id="txAmount" class="form-input" placeholder="0.00" required min="1" step="0.01" style="font-size: var(--font-size-2xl); font-weight: bold; font-family: var(--font-family-heading); padding-left: 2.5rem;">
+                    </div>
                 </div>
 
                 <!-- Title -->

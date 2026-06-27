@@ -57,7 +57,7 @@ async function fetchAndRenderAccounts() {
                 <div class="account-balance" style="font-size: 1.8rem;">${UI.formatCurrency(acc.balance)}</div>
                 <div style="font-size: 0.85rem; opacity: 0.8; margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
                     <span>${typeStr}</span>
-                    <span>**** ${Math.floor(1000 + Math.random() * 9000)}</span>
+                    <span>**** ${String(acc.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 1234567).slice(-4).padStart(4, '0')}</span>
                 </div>
                 <div class="btn btn-ghost" style="position: absolute; top: var(--space-2); right: var(--space-2); color: white; padding: 0.25rem;"><i class='bx bx-edit-alt'></i></div>
             </button>

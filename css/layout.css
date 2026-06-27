@@ -93,8 +93,10 @@ html {
 .app-content {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   padding: var(--space-6) var(--space-4);
-  padding-bottom: 100px; /* Space for Bottom Nav + FAB */
+  padding-bottom: 140px; /* Space for Bottom Nav + FAB */
 }
 
 /* Sidebar (Hidden on Mobile) */
@@ -144,6 +146,7 @@ html {
   color: var(--text-secondary);
   font-weight: var(--font-weight-medium);
   transition: all var(--transition-fast);
+  touch-action: manipulation;
   text-decoration: none;
   border-radius: var(--radius-base);
   position: relative;
@@ -201,6 +204,7 @@ html {
   flex: 1;
   height: 100%;
   text-decoration: none;
+  touch-action: manipulation;
   transition: all var(--bounce-spring);
   position: relative;
 }
@@ -257,6 +261,7 @@ html {
   box-shadow: var(--shadow-lg);
   border: none;
   cursor: pointer;
+  touch-action: manipulation;
   z-index: 15;
   transition: all var(--bounce-spring);
 }

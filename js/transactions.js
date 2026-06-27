@@ -51,6 +51,9 @@ async function fetchAndRenderTransactions() {
         
         // Sort newest first
         transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+
+
         renderTransactions();
         
         // Populate account dropdown
@@ -84,6 +87,21 @@ function formatDateHeader(dateStr) {
 }
 
 function renderTransactions() {
+    // Update chip counts
+    const chips = document.querySelectorAll('.filter-chips .chip');
+    chips.forEach(chip => {
+        const filter = chip.getAttribute('data-filter');
+        if (!chip.dataset.originalText) {
+            chip.dataset.originalText = chip.textContent.replace(/\s*\(\d+\)$/, '').trim();
+        }
+        
+        let count = 0;
+        if (filter === 'all') count = transactions.length;
+        else count = transactions.filter(t => t.type.toLowerCase() === filter).length;
+        
+        chip.textContent = `${chip.dataset.originalText} (${count})`;
+    });
+
     const searchTerm = searchInput.value.toLowerCase();
     
     const filtered = transactions.filter(tx => {
@@ -95,6 +113,17 @@ function renderTransactions() {
     if (filtered.length === 0) {
         transactionsContainer.innerHTML = '';
         emptyState.style.display = 'flex';
+        
+        const emptyStateMsg = document.getElementById('emptyStateMsg');
+        const emptyStateBtn = document.getElementById('emptyStateBtn');
+        
+        if (transactions.length === 0) {
+            if (emptyStateMsg) emptyStateMsg.textContent = 'No transactions yet — add your first one.';
+            if (emptyStateBtn) emptyStateBtn.style.display = 'inline-flex';
+        } else {
+            if (emptyStateMsg) emptyStateMsg.textContent = 'No results. Try a different filter.';
+            if (emptyStateBtn) emptyStateBtn.style.display = 'none';
+        }
         return;
     }
 
@@ -133,7 +162,7 @@ function renderTransactions() {
             }
 
             return `
-            <div class="transaction-item animate-slide-up" style="opacity: 0" onclick="editTransaction('${tx.id}')">
+            <button type="button" class="transaction-item animate-slide-up w-full text-left" style="opacity: 0" onclick="editTransaction('${tx.id}')">
                 <div class="transaction-details">
                     <div class="transaction-icon" style="background: ${bg}; color: ${color}">
                         <i class='bx ${UI.escapeHtml(icon)}'></i>
@@ -146,7 +175,7 @@ function renderTransactions() {
                 <div class="transaction-amount ${tx.type}" style="color: ${color}">
                     ${sign}${UI.formatCurrency(tx.amount)}
                 </div>
-            </div>
+            </button>
             `;
         }).join('');
         
@@ -263,13 +292,20 @@ txForm.addEventListener('submit', async (e) => {
         
         if (id) {
             await State.updateTransaction(id, txData);
+            const index = transactions.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactions[index] = { ...transactions[index], ...txData };
+            }
         } else {
             txData.id = 'tx_' + Date.now(); // local temp id
             await State.addTransaction(txData);
+            transactions.unshift(txData);
         }
         
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
         UI.closeSheet();
-        await fetchAndRenderTransactions();
+        renderTransactions();
+        State.clearCache();
     } catch (err) {
         console.error(err);
         UI.showToast("Action failed", "error");
@@ -289,8 +325,10 @@ deleteTxBtn.addEventListener('click', async (e) => {
         deleteTxBtn.disabled = true;
         try {
             await State.deleteTransaction(id);
+            transactions = transactions.filter(t => t.id !== id);
             UI.closeSheet();
-            await fetchAndRenderTransactions();
+            renderTransactions();
+            State.clearCache();
         } catch(err) {
             console.error(err);
             UI.showToast("Failed to delete", "error");
