@@ -234,6 +234,35 @@ window.UI = (() => {
     window.location.href = 'index.html';
   }
 
+  /*
+   * exitApp()
+   * Attempts to close/exit the installed PWA without logging the user out.
+   * The auth token is deliberately left untouched in all paths.
+   *
+   * Strategy (in order):
+   *  1. window.close() — works in some Android standalone WebViews when the
+   *     WebView was opened by the launcher (i.e. has an opener context).
+   *  2. If the page is still open after a short wait, show a friendly toast
+   *     explaining that the platform does not allow script-triggered close.
+   *
+   * Note: there is no reliable cross-platform way to programmatically close
+   * an installed PWA window on Android. The browser specification intentionally
+   * restricts window.close() to windows that were opened by script. We try it
+   * anyway because some OEM WebView builds do honour it for standalone apps,
+   * but we never assume it will work.
+   */
+  function exitApp() {
+    window.close();
+    // If still alive after the close attempt, show a friendly fallback message.
+    setTimeout(() => {
+      showToast(
+        'Press the Home or Back button to exit the app.',
+        'info',
+        4000
+      );
+    }, 300);
+  }
+
   function toggleUserDropdown(e) {
       if (e) {
           e.stopPropagation();
@@ -269,6 +298,7 @@ window.UI = (() => {
     formatCurrency,
     escapeHtml,
     logout,
+    exitApp,
     toggleUserDropdown,
     navigateTo,
     showConfirm

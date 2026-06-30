@@ -53,10 +53,25 @@ html {
 
 .app-layout {
   display: flex;
-  height: 100vh;
-  height: 100dvh;
+  /*
+   * STANDALONE PWA FIX — height unit strategy
+   *
+   * Do NOT repeat a dvh/svh/lvh unit here. base.css already sets
+   *   html { height: 100dvh }   ← single authoritative viewport measurement
+   *   body { height: 100% }     ← inherits from html
+   * Using height:100% here chains off that single root calculation.
+   *
+   * If we wrote height:100dvh again, Android WebView in standalone mode
+   * can resolve the two dvh calls independently — one against the layout
+   * viewport and one against the visual viewport — producing a container
+   * that is taller than the visible screen. overflow:hidden then silently
+   * clips the .bottom-nav into that invisible excess. Both must be fixed
+   * together: remove the duplicate dvh here AND remove overflow:hidden on
+   * .app-main below.
+   */
+  height: 100%;
   width: 100vw;
-  overflow: hidden;
+  overflow: hidden; /* .app-layout itself is the outermost scroll jail */
   background-color: transparent;
   animation: layoutSlideIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -66,7 +81,14 @@ html {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  /*
+   * STANDALONE PWA FIX — overflow removed
+   *
+   * overflow:hidden here was the clipping mechanism that hid .bottom-nav
+   * when the standalone Android WebView resized the visual viewport. The
+   * outer .app-layout already provides the scroll jail; .app-main does not
+   * need to clip. .app-content handles its own overflow-y:auto scrolling.
+   */
   min-width: 320px;
 }
 
@@ -135,8 +157,12 @@ html {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: var(--space-6) var(--space-4);
-  /* Space for FAB only — nav is now a flex child below */
-  padding-bottom: 90px;
+  /*
+   * Reserve space for FAB above the nav.
+   * Include safe-area-inset-bottom so content isn't hidden behind the
+   * Android gesture bar on devices that report a non-zero inset.
+   */
+  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Sidebar (Hidden on Mobile) */

@@ -183,7 +183,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-image: var(--bg-gradient);
-  background-attachment: fixed;
+  /* background-attachment: fixed intentionally removed:
+   * In Android WebView (standalone PWA mode) this triggers a full
+   * compositing repaint layer that can cause visual stacking bugs with
+   * flex children including .bottom-nav. Safe to remove because body
+   * itself does not scroll — the scroll container is .app-content. */
 }
 
 h1, h2, h3, h4, h5, h6 {
