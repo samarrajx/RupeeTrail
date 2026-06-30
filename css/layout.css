@@ -81,14 +81,7 @@ html {
   display: flex;
   flex-direction: column;
   position: relative;
-  /*
-   * STANDALONE PWA FIX — overflow removed
-   *
-   * overflow:hidden here was the clipping mechanism that hid .bottom-nav
-   * when the standalone Android WebView resized the visual viewport. The
-   * outer .app-layout already provides the scroll jail; .app-main does not
-   * need to clip. .app-content handles its own overflow-y:auto scrolling.
-   */
+  overflow: hidden; /* Safe to clip — .bottom-nav is no longer a child */
   min-width: 320px;
 }
 
@@ -242,12 +235,29 @@ html {
 
 /* Bottom Navigation (Mobile Only) */
 .bottom-nav {
-  /* Flex child — sits naturally at bottom of .app-main column.
-   * No position:fixed needed; avoids the Android Chrome PWA
-   * containing-block bug where fixed children get trapped.
+  /*
+   * ANDROID STANDALONE PWA FIX — definitive approach
+   *
+   * All previous flex-child attempts failed because:
+   *   - The containing height chain (100dvh on html + inherited 100% down to
+   *     .app-layout) can still resolve a px value slightly taller than the
+   *     real visual viewport on certain Android OEM builds / gesture bar
+   *     configurations, and
+   *   - any sub-pixel mismatch causes the bottom of the flex column to fall
+   *     outside the visible area, and the nav disappears.
+   *
+   * The definitive fix: position:fixed as a DIRECT CHILD OF <body>.
+   * The containing-block chain is body → html → viewport. There is no
+   * overflow:hidden, transform, will-change, or filter anywhere in that
+   * chain, so the browser cannot trap or misplace a fixed element.
+   * The FAB already uses this same pattern and has always worked.
+   *
+   * The .bottom-nav element is moved out of .app-main in all HTML files.
    */
-  flex-shrink: 0;
-  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: calc(70px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
@@ -259,7 +269,7 @@ html {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 10;
+  z-index: 50;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
   border-radius: 20px 20px 0 0;
 }

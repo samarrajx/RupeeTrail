@@ -54,7 +54,7 @@
                     <h1 class="page-title">Transactions</h1>
                 </div>
                 <div class="header-right" style="display: flex; gap: 15px; align-items: center;">
-                    <i class='bx bx-door-open hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.exitApp()" title="Exit app"></i>
+                    <i class='bx bx-power-off hide-on-desktop' style="font-size: 24px; color: var(--text-muted); cursor: pointer;" onclick="UI.exitApp()" title="Exit app"></i>
                     <div class="user-popover-container">
                         <i class='bx bx-user-circle user-popover-btn' onclick="UI.toggleUserDropdown(event)"></i>
                         <div class="user-popover" id="userPopover">
@@ -137,26 +137,27 @@
 
             </main>
 
-            <!-- Bottom Navigation (Mobile) -->
-            <nav class="bottom-nav hide-on-desktop">
-                <a href="dashboard.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('dashboard.html')"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
-                <a href="transactions.html" class="nav-item active" onclick="event.preventDefault(); UI.navigateTo('transactions.html')"><i class='bx bx-list-ul'></i><span>Txns</span></a>
-                <a href="reports.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('reports.html')"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
-                <a href="accounts.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('accounts.html')"><i class='bx bx-wallet'></i><span>Accounts</span></a>
-                <a href="settings.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('settings.html')"><i class='bx bx-cog'></i><span>Settings</span></a>
-            </nav>
-            
-            <!-- FAB overrides default to open Bottom Sheet -->
-            <button class="fab hide-on-desktop" id="fabBtn">
-                <i class='bx bx-plus'></i>
-            </button>
-            
             <!-- Floating Add Button for Desktop -->
             <button class="btn btn-primary hide-on-mobile" id="desktopAddBtn" style="position: absolute; bottom: var(--space-6); right: var(--space-6); border-radius: var(--radius-full); padding: var(--space-3) var(--space-5); box-shadow: var(--shadow-lg);">
                 <i class='bx bx-plus' style="margin-right: 0.5rem;"></i> New Transaction
             </button>
-        </div>
-    </div>
+        </div><!-- /.app-main -->
+    </div><!-- /.app-layout -->
+
+    <!-- Bottom Navigation: direct <body> child so position:fixed is
+         contained by the viewport, not by any overflow:hidden ancestor -->
+    <nav class="bottom-nav hide-on-desktop">
+        <a href="dashboard.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('dashboard.html')"><i class='bx bx-grid-alt'></i><span>Dash</span></a>
+        <a href="transactions.html" class="nav-item active" onclick="event.preventDefault(); UI.navigateTo('transactions.html')"><i class='bx bx-list-ul'></i><span>Txns</span></a>
+        <a href="reports.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('reports.html')"><i class='bx bx-pie-chart-alt-2'></i><span>Reports</span></a>
+        <a href="accounts.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('accounts.html')"><i class='bx bx-wallet'></i><span>Accounts</span></a>
+        <a href="settings.html" class="nav-item" onclick="event.preventDefault(); UI.navigateTo('settings.html')"><i class='bx bx-cog'></i><span>Settings</span></a>
+    </nav>
+
+    <!-- FAB overrides default to open Bottom Sheet -->
+    <button class="fab hide-on-desktop" id="fabBtn">
+        <i class='bx bx-plus'></i>
+    </button>
 
     <!-- Bottom Sheet overlay and content -->
     <div class="bottom-sheet-overlay" id="sheetOverlay"></div>
