@@ -172,7 +172,12 @@ html {
 }
 
 body {
-  animation: pageFadeIn 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* pageFadeIn animation removed from body intentionally.
+   * .bottom-nav is position:fixed as a direct body child, so body's
+   * initial opacity:0 state would make the nav invisible for 200ms on
+   * every page load — exactly the "nav disappears on tab switch" bug.
+   * The layoutSlideIn animation on .app-layout handles the content
+   * fade-in; the nav should be visible immediately at all times. */
   font-family: var(--font-family-base);
   background-color: var(--bg-app);
   color: var(--text-primary);

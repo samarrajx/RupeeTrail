@@ -252,15 +252,24 @@ window.UI = (() => {
    * but we never assume it will work.
    */
   function exitApp() {
-    window.close();
-    // If still alive after the close attempt, show a friendly fallback message.
-    setTimeout(() => {
-      showToast(
-        'Press the Home or Back button to exit the app.',
-        'info',
-        4000
-      );
-    }, 300);
+    /*
+     * window.close() is blocked by the browser spec on every Android
+     * standalone PWA — it only works on script-opened windows, never on
+     * launcher-opened PWA windows. So we immediately move to the real
+     * fallback: navigate back to the start of the history stack so the
+     * user is literally one back-press away from the OS closing the app.
+     *
+     * Auth token is never touched in any code path here.
+     */
+    const steps = history.length - 1;
+    if (steps > 0) {
+      history.go(-steps);
+      setTimeout(() => {
+        showToast('Press the ← Back button once more to exit.', 'info', 5000);
+      }, 400);
+    } else {
+      showToast('Press the ← Back button to exit the app.', 'info', 5000);
+    }
   }
 
   function toggleUserDropdown(e) {
@@ -281,12 +290,23 @@ window.UI = (() => {
   });
 
   function navigateTo(url) {
-      document.body.style.transition = 'opacity 150ms ease-out, transform 150ms ease-out';
-      document.body.style.opacity = '0';
-      document.body.style.transform = 'translateY(6px)';
+      /*
+       * IMPORTANT: do NOT set transform on document.body.
+       * Any non-none transform on body makes body the containing block
+       * for ALL position:fixed children (including .bottom-nav), which
+       * yanks the nav off its viewport anchor during every transition.
+       * Animate .app-layout instead — the nav is its sibling, not its
+       * descendant, so .app-layout's transform does not affect the nav.
+       */
+      const layout = document.querySelector('.app-layout');
+      if (layout) {
+          layout.style.transition = 'opacity 120ms ease-out, transform 120ms ease-out';
+          layout.style.opacity = '0';
+          layout.style.transform = 'translateY(6px)';
+      }
       setTimeout(() => {
           window.location.href = url;
-      }, 150);
+      }, 120);
   }
 
   return {
